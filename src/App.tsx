@@ -7,26 +7,21 @@ import { GATED_TABS, type Tab } from './router/routes';
 import { ProfileProvider, useProfile } from './context/ProfileContext';
 import { SettingsProvider } from './context/SettingsContext';
 import LockedScreen from './components/LockedScreen';
+import Modal from './components/Modal';
 import WelcomeScreen from './features/onboarding/WelcomeScreen';
 import PerfilScreen from './features/perfil/PerfilScreen';
 import NutricionScreen from './features/nutricion/NutricionScreen';
 import GimnasioScreen from './features/gimnasio/GimnasioScreen';
+import EstadisticasScreen from './features/estadisticas/EstadisticasScreen';
+import NotificacionesScreen from './features/notificaciones/NotificacionesScreen';
+import SettingsPanel from './features/ajustes/SettingsPanel';
 import TimerFab from './features/timer/TimerFab';
 import styles from './App.module.css';
-
-/** Placeholder para pantallas que llegan en features posteriores. */
-function ComingSoon({ title }: { title: string }) {
-  return (
-    <div className={styles.comingSoon}>
-      <h1 className={styles.title}>{title}</h1>
-      <p>Esta sección estará disponible muy pronto.</p>
-    </div>
-  );
-}
 
 function AppContent() {
   const { loading, firstLaunch, profile } = useProfile();
   const [tab, setTab] = useState<Tab>('perfil');
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   if (loading) {
     return (
@@ -59,16 +54,25 @@ function AppContent() {
         screen = <GimnasioScreen />;
         break;
       case 'estadisticas':
-        screen = <ComingSoon title="Estadísticas" />;
+        screen = <EstadisticasScreen />;
         break;
       case 'notificaciones':
-        screen = <ComingSoon title="Notificaciones" />;
+        screen = <NotificacionesScreen onOpenSettings={() => setSettingsOpen(true)} />;
         break;
     }
   }
 
   return (
     <div className={styles.layout}>
+      {/* Acceso a Ajustes/Acerca de desde cualquier pantalla (design §13). */}
+      <button
+        type="button"
+        className={styles.settingsBtn}
+        aria-label="Ajustes"
+        onClick={() => setSettingsOpen(true)}
+      >
+        ⚙
+      </button>
       <main className={styles.content}>
         <div className="app-shell">{screen}</div>
       </main>
@@ -76,6 +80,10 @@ function AppContent() {
           cualquier pantalla. Independiente del RestTimer/SessionClock. */}
       <TimerFab />
       <TabBar active={tab} onChange={setTab} />
+
+      <Modal open={settingsOpen} title="Ajustes" onClose={() => setSettingsOpen(false)}>
+        <SettingsPanel />
+      </Modal>
     </div>
   );
 }

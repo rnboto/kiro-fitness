@@ -1,5 +1,7 @@
-// Scheduler de recordatorios — funciones PURAS testeables (design §9).
-// El wiring de permisos/setTimeout va en FEAT-005; aquí solo las funciones puras.
+// Scheduler de recordatorios — funciones PURAS (design §9) + wiring de permisos
+// y timers (FEAT-005). Las funciones puras no dependen de React ni de storage.
+
+import type { ReminderSettings } from '../../storage';
 
 /** Parsea 'HH:mm' a minutos desde medianoche. */
 function parseTimeToMinutes(hhmm: string): number {
@@ -76,4 +78,146 @@ export function nextBioimpedanceDate(lastEntryDate: Date, weeks: number): Date {
   const next = new Date(lastEntryDate);
   next.setDate(next.getDate() + weeks * 7);
   return next;
+}
+
+// ---------------------------------------------------------------------------
+// Wiring de permisos y scheduling (design §9). Sin cron de background fiable en
+// PWA: Notifications API para el permiso/mostrar avisos y setTimeout recalculado
+// por disparo mientras la pestaña está viva. Degrada a banners in-app si se
+// deniega el permiso (la UI muestra siempre la lista de "próximos" calculada).
+// ---------------------------------------------------------------------------
+
+/** Estado del permiso de notificaciones del sistema. */
+export type PermissionState = 'granted' | 'denied' | 'default' | 'unsupported';
+
+/** Lee el estado actual del permiso de notificaciones. */
+export function getPermissionState(): PermissionState {
+  if (typeof Notification === 'undefined') return 'unsupported';
+  return Notification.permission as PermissionState;
+}
+
+/**
+ * Solicita permiso de notificaciones (design §9). Si no hay soporte o el usuario
+ * deniega, se degrada a banners in-app (la pantalla sigue mostrando la lista de
+ * próximos recordatorios calculada).
+ */
+export async function requestPermission(): Promise<PermissionState> {
+  if (typeof Notification === 'undefined') return 'unsupported';
+  try {
+    const result = await Notification.requestPermission();
+    return result as PermissionState;
+  } catch {
+    return 'denied';
+  }
+}
+
+/**
+ * Muestra una notificación del sistema si hay permiso; si no, invoca el fallback
+ * in-app (banner). Nunca lanza.
+ */
+export function notify(
+  title: string,
+  body: string,
+  onInApp?: (title: string, body: string) => void,
+): void {
+  if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+    try {
+      new Notification(title, { body });
+      return;
+    } catch {
+      // cae al fallback in-app
+    }
+  }
+  onInApp?.(title, body);
+}
+
+/** Milisegundos desde `now` hasta la próxima aparición diaria de 'HH:mm'. */
+export function msUntilNextDaily(now: Date, hhmm: string): number {
+  const target = new Date(now);
+  const [h, m] = hhmm.split(':').map((n) => Number(n));
+  target.setHours(Number.isFinite(h) ? h : 0, Number.isFinite(m) ? m : 0, 0, 0);
+  if (target.getTime() <= now.getTime()) {
+    target.setDate(target.getDate() + 1);
+  }
+  return target.getTime() - now.getTime();
+}
+
+/** Clamp defensivo de delays de setTimeout (evita valores inválidos/enormes). */
+function safeDelay(ms: number): number {
+  // Máximo seguro de setTimeout (~24.8 días) y mínimo 0.
+  return Math.min(Math.max(0, ms), 2_147_483_647);
+}
+
+/** Handle de un conjunto de timers activos (para poder cancelarlos). */
+export interface SchedulerHandle {
+  cancel: () => void;
+}
+
+interface ScheduleDeps {
+  /** Fallback in-app cuando no hay permiso del sistema. */
+  onInApp?: (title: string, body: string) => void;
+  /** Inyectable en tests; por defecto Date.now vía new Date(). */
+  now?: () => Date;
+}
+
+/**
+ * Programa los timers activos a partir de `reminders` (design §9). Devuelve un
+ * handle con `cancel()` para limpiarlos (p.ej. al reprogramar o desmontar).
+ *
+ * - Peso: diario a `weightLog.time`; al disparar, avisa y reprograma +24h.
+ * - Hidratación: setTimeout recalculado por disparo usando `nextHydrationFire`
+ *   (ventana semiabierta alineada a startTime).
+ * - Bioimpedancia: no se programa aquí (es un aviso de calendario basado en la
+ *   última medición); la UI lo muestra en la lista de próximos.
+ */
+export function scheduleReminders(
+  reminders: ReminderSettings,
+  deps: ScheduleDeps = {},
+): SchedulerHandle {
+  const now = deps.now ?? (() => new Date());
+  const timers: ReturnType<typeof setTimeout>[] = [];
+  let cancelled = false;
+
+  const arm = (ms: number, fn: () => void) => {
+    if (cancelled) return;
+    timers.push(setTimeout(fn, safeDelay(ms)));
+  };
+
+  // Recordatorio de peso: diario, reprograma +24h al disparar.
+  if (reminders.weightLog.enabled) {
+    const scheduleWeight = () => {
+      const delay = msUntilNextDaily(now(), reminders.weightLog.time);
+      arm(delay, () => {
+        notify('Registra tu peso', 'Es momento de anotar tu peso de hoy.', deps.onInApp);
+        scheduleWeight();
+      });
+    };
+    scheduleWeight();
+  }
+
+  // Hidratación: setTimeout recalculado por disparo (no setInterval fijo).
+  if (reminders.hydration.enabled) {
+    const scheduleHydration = () => {
+      const current = now();
+      const next = nextHydrationFire(
+        current,
+        reminders.hydration.startTime,
+        reminders.hydration.endTime,
+        reminders.hydration.intervalMinutes,
+      );
+      arm(next.getTime() - current.getTime(), () => {
+        notify('Hidrátate', 'Bebe agua para mantener tu rendimiento.', deps.onInApp);
+        scheduleHydration();
+      });
+    };
+    scheduleHydration();
+  }
+
+  return {
+    cancel: () => {
+      cancelled = true;
+      for (const t of timers) clearTimeout(t);
+      timers.length = 0;
+    },
+  };
 }

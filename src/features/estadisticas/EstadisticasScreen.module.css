@@ -1,0 +1,41 @@
+.screen {
+  display: flex;
+  flex-direction: column;
+  gap: var(--kiro-space-5);
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--kiro-space-1);
+}
+
+.title {
+  font-size: var(--kiro-font-size-xl);
+}
+
+.subtitle {
+  color: var(--kiro-text-muted);
+}
+
+/* Transición suave de contenido al cambiar de tab interna. */
+.panel {
+  animation: fadeSlide 0.28s ease;
+}
+
+@keyframes fadeSlide {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .panel {
+    animation: none;
+  }
+}

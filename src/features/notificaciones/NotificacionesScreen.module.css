@@ -1,0 +1,181 @@
+.screen {
+  display: flex;
+  flex-direction: column;
+  gap: var(--kiro-space-4);
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--kiro-space-1);
+}
+
+.title {
+  font-size: var(--kiro-font-size-xl);
+}
+
+.subtitle {
+  color: var(--kiro-text-muted);
+}
+
+.loading {
+  color: var(--kiro-text-muted);
+}
+
+.permission {
+  display: flex;
+  flex-direction: column;
+  gap: var(--kiro-space-3);
+  background: var(--kiro-accent-soft);
+  border: 1px solid var(--kiro-accent);
+  border-radius: var(--kiro-radius-md);
+  padding: var(--kiro-space-4);
+  color: var(--kiro-text);
+  font-size: var(--kiro-font-size-sm);
+}
+
+.primaryBtn {
+  align-self: flex-start;
+  padding: var(--kiro-space-2) var(--kiro-space-4);
+  border-radius: var(--kiro-radius-pill);
+  background: var(--kiro-accent);
+  color: #06241b;
+  border: none;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--kiro-space-3);
+  background: var(--kiro-surface-3);
+  border: 1px solid var(--kiro-border);
+  border-radius: var(--kiro-radius-md);
+  padding: var(--kiro-space-3);
+  color: var(--kiro-text);
+  font-size: var(--kiro-font-size-sm);
+}
+
+.bannerClose {
+  background: transparent;
+  border: none;
+  color: var(--kiro-text-muted);
+  cursor: pointer;
+  font-size: var(--kiro-font-size-md);
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--kiro-space-3);
+  background: var(--kiro-surface);
+  border: 1px solid var(--kiro-border);
+  border-radius: var(--kiro-radius-lg);
+  padding: var(--kiro-space-4);
+}
+
+.cardTitle {
+  font-size: var(--kiro-font-size-md);
+  font-weight: 700;
+}
+
+.empty {
+  color: var(--kiro-text-muted);
+}
+
+.upcoming {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--kiro-space-2);
+}
+
+.upcomingRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--kiro-space-3);
+}
+
+.upcomingLabel {
+  font-weight: 700;
+}
+
+.upcomingWhen {
+  color: var(--kiro-text-muted);
+  font-size: var(--kiro-font-size-sm);
+  text-align: right;
+}
+
+.pending {
+  color: var(--kiro-warning);
+  font-weight: 700;
+}
+
+.rowHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--kiro-space-3);
+}
+
+.switch {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--kiro-space-2);
+  cursor: pointer;
+}
+
+.switchLabel {
+  font-size: var(--kiro-font-size-xs);
+  color: var(--kiro-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.fields {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--kiro-space-3);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--kiro-space-1);
+  font-size: var(--kiro-font-size-sm);
+  color: var(--kiro-text-muted);
+}
+
+.field input {
+  padding: var(--kiro-space-2);
+  border-radius: var(--kiro-radius-sm);
+  background: var(--kiro-surface-2);
+  border: 1px solid var(--kiro-border);
+  color: var(--kiro-text);
+  font-size: var(--kiro-font-size-md);
+}
+
+.hint {
+  color: var(--kiro-text-dim);
+  font-size: var(--kiro-font-size-sm);
+}
+
+.settingsLink {
+  padding: var(--kiro-space-3);
+  border-radius: var(--kiro-radius-md);
+  background: var(--kiro-surface-2);
+  border: 1px solid var(--kiro-border);
+  color: var(--kiro-text);
+  font-weight: 700;
+  font-size: var(--kiro-font-size-sm);
+  cursor: pointer;
+}
+
+@media (max-width: 420px) {
+  .fields {
+    grid-template-columns: 1fr;
+  }
+}

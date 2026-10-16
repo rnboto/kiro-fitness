@@ -1,0 +1,48 @@
+.segmented {
+  position: relative;
+  display: flex;
+  width: 100%;
+  padding: var(--kiro-space-1);
+  background: var(--kiro-surface-2);
+  border: 1px solid var(--kiro-border);
+  border-radius: var(--kiro-radius-pill);
+  overflow: hidden;
+}
+
+/* Indicador deslizante que marca la opción activa. Ocupa el ancho interior
+   (descontando el padding del contenedor) y se desliza con transición suave. */
+.indicator {
+  position: absolute;
+  top: var(--kiro-space-1);
+  bottom: var(--kiro-space-1);
+  left: var(--kiro-space-1);
+  background: var(--kiro-accent);
+  border-radius: var(--kiro-radius-pill);
+  box-shadow: var(--kiro-shadow-1);
+  transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: none;
+}
+
+.segment {
+  position: relative;
+  z-index: 1;
+  flex: 1 1 0;
+  padding: var(--kiro-space-2) var(--kiro-space-1);
+  background: transparent;
+  border: none;
+  color: var(--kiro-text-muted);
+  font-weight: 700;
+  font-size: var(--kiro-font-size-sm);
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.segmentActive {
+  color: #06241b;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .indicator {
+    transition: none;
+  }
+}

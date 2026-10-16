@@ -1,0 +1,22 @@
+.range {
+  display: inline-flex;
+  gap: var(--kiro-space-2);
+}
+
+.chip {
+  padding: var(--kiro-space-1) var(--kiro-space-3);
+  border-radius: var(--kiro-radius-pill);
+  background: var(--kiro-surface-2);
+  border: 1px solid var(--kiro-border);
+  color: var(--kiro-text-muted);
+  font-size: var(--kiro-font-size-xs);
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+.chipActive {
+  background: var(--kiro-accent-soft);
+  color: var(--kiro-accent);
+  border-color: var(--kiro-accent);
+}

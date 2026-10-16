@@ -1,0 +1,23 @@
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--kiro-space-2);
+  padding: var(--kiro-space-5) 0 var(--kiro-space-2);
+  color: var(--kiro-text-dim);
+  font-size: var(--kiro-font-size-xs);
+}
+
+.brand {
+  font-weight: 700;
+  color: var(--kiro-text-muted);
+  letter-spacing: 0.04em;
+}
+
+.sep {
+  opacity: 0.6;
+}
+
+.credit {
+  letter-spacing: 0.02em;
+}

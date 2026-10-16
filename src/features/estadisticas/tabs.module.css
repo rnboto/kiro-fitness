@@ -1,0 +1,116 @@
+/* Estilos compartidos por las 4 tabs internas de Estadísticas. */
+
+.tab {
+  display: flex;
+  flex-direction: column;
+  gap: var(--kiro-space-4);
+}
+
+.tabHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--kiro-space-3);
+  flex-wrap: wrap;
+}
+
+.tabTitle {
+  font-size: var(--kiro-font-size-lg);
+  font-weight: 700;
+}
+
+.empty {
+  color: var(--kiro-text-muted);
+  background: var(--kiro-surface);
+  border: 1px dashed var(--kiro-border);
+  border-radius: var(--kiro-radius-md);
+  padding: var(--kiro-space-4);
+  text-align: center;
+}
+
+.card {
+  background: var(--kiro-surface);
+  border: 1px solid var(--kiro-border);
+  border-radius: var(--kiro-radius-lg);
+  padding: var(--kiro-space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--kiro-space-2);
+}
+
+.cardTitle {
+  font-size: var(--kiro-font-size-sm);
+  color: var(--kiro-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.chartBody {
+  width: 100%;
+}
+
+/* Rejilla de métricas resumen (p.ej. Nutrición, Adherencia). */
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--kiro-space-3);
+}
+
+.metric {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  background: var(--kiro-surface);
+  border: 1px solid var(--kiro-border);
+  border-radius: var(--kiro-radius-md);
+  padding: var(--kiro-space-3);
+}
+
+.metricLabel {
+  font-size: var(--kiro-font-size-xs);
+  color: var(--kiro-text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.metricValue {
+  font-size: var(--kiro-font-size-lg);
+  font-weight: 700;
+}
+
+/* Lista de progresión de fuerza / entrenos. */
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--kiro-space-2);
+}
+
+.row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--kiro-space-3);
+  background: var(--kiro-surface);
+  border: 1px solid var(--kiro-border);
+  border-radius: var(--kiro-radius-md);
+  padding: var(--kiro-space-3);
+}
+
+.rowName {
+  font-weight: 700;
+}
+
+.rowMeta {
+  color: var(--kiro-text-muted);
+  font-size: var(--kiro-font-size-sm);
+  text-align: right;
+}
+
+.warning {
+  font-size: var(--kiro-font-size-sm);
+  color: var(--kiro-warning);
+  background: rgba(242, 184, 75, 0.1);
+  border: 1px solid rgba(242, 184, 75, 0.3);
+  border-radius: var(--kiro-radius-md);
+  padding: var(--kiro-space-3);
+}
