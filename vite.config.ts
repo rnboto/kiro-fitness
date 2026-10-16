@@ -3,7 +3,11 @@ import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 
 // https://vitejs.dev/config/
+// base: la app se publica en GitHub Pages bajo /kiro-fitness/.
+const base = '/kiro-fitness/';
+
 export default defineConfig({
+  base,
   plugins: [
     react(),
     VitePWA({
@@ -15,7 +19,8 @@ export default defineConfig({
         lang: 'es',
         description: 'Nutrición Deportiva y Entrenamiento de Fuerza personalizado.',
         display: 'standalone',
-        start_url: '/',
+        scope: base,
+        start_url: base,
         theme_color: '#0b0f14',
         background_color: '#0b0f14',
         icons: [
