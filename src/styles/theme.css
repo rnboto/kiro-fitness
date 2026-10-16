@@ -1,0 +1,52 @@
+/* Kiro — Tema oscuro premium. Variables CSS globales.
+   Mobile-first. Único tema (oscuro) por diseño. */
+:root {
+  /* Fondo y superficies */
+  --kiro-bg: #0b0f14;
+  --kiro-surface: #141b23;
+  --kiro-surface-2: #1c252f;
+  --kiro-surface-3: #26323e;
+  --kiro-border: #2c3845;
+
+  /* Acentos */
+  --kiro-accent: #28e0a8;
+  --kiro-accent-strong: #12b587;
+  --kiro-accent-soft: rgba(40, 224, 168, 0.14);
+  --kiro-warning: #f2b84b;
+  --kiro-danger: #ef5f6b;
+
+  /* Texto */
+  --kiro-text: #eef3f8;
+  --kiro-text-muted: #9fb0c0;
+  --kiro-text-dim: #6c7d8d;
+
+  /* Tipografía */
+  --kiro-font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica,
+    Arial, sans-serif;
+  --kiro-font-size-xs: 0.75rem;
+  --kiro-font-size-sm: 0.875rem;
+  --kiro-font-size-md: 1rem;
+  --kiro-font-size-lg: 1.25rem;
+  --kiro-font-size-xl: 1.75rem;
+
+  /* Espaciados */
+  --kiro-space-1: 4px;
+  --kiro-space-2: 8px;
+  --kiro-space-3: 12px;
+  --kiro-space-4: 16px;
+  --kiro-space-5: 24px;
+  --kiro-space-6: 32px;
+
+  /* Radios */
+  --kiro-radius-sm: 8px;
+  --kiro-radius-md: 14px;
+  --kiro-radius-lg: 20px;
+  --kiro-radius-pill: 999px;
+
+  /* Sombras */
+  --kiro-shadow-1: 0 2px 10px rgba(0, 0, 0, 0.3);
+  --kiro-shadow-2: 0 8px 28px rgba(0, 0, 0, 0.4);
+
+  /* Alturas de layout */
+  --kiro-tabbar-height: 64px;
+}
