@@ -1,0 +1,40 @@
+.intro {
+  color: var(--kiro-text-muted);
+  font-size: var(--kiro-font-size-sm);
+  margin-bottom: var(--kiro-space-4);
+}
+
+.empty {
+  color: var(--kiro-text-muted);
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--kiro-space-3);
+}
+
+.item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--kiro-space-3);
+  background: var(--kiro-surface-2);
+  border: 1px solid var(--kiro-border);
+  border-radius: var(--kiro-radius-md);
+}
+
+.name {
+  font-weight: 700;
+}
+
+.grams {
+  color: var(--kiro-accent);
+  font-size: var(--kiro-font-size-sm);
+  font-weight: 600;
+}
+
+.note {
+  color: var(--kiro-text-dim);
+  font-size: var(--kiro-font-size-xs);
+}

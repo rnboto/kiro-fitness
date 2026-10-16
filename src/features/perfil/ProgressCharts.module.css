@@ -1,0 +1,30 @@
+.charts {
+  display: flex;
+  flex-direction: column;
+  gap: var(--kiro-space-5);
+}
+
+.chart {
+  background: var(--kiro-surface);
+  border: 1px solid var(--kiro-border);
+  border-radius: var(--kiro-radius-lg);
+  padding: var(--kiro-space-4);
+}
+
+.chartTitle {
+  font-size: var(--kiro-font-size-md);
+  margin-bottom: var(--kiro-space-3);
+}
+
+.unit {
+  color: var(--kiro-text-muted);
+  font-weight: 500;
+}
+
+.chartBody {
+  width: 100%;
+}
+
+.empty {
+  color: var(--kiro-text-muted);
+}

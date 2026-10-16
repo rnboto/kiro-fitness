@@ -1,0 +1,19 @@
+.layout {
+  min-height: 100dvh;
+}
+
+.content {
+  padding-bottom: calc(var(--kiro-tabbar-height) + env(safe-area-inset-bottom) + var(--kiro-space-5));
+}
+
+.comingSoon {
+  display: flex;
+  flex-direction: column;
+  gap: var(--kiro-space-3);
+  color: var(--kiro-text-muted);
+}
+
+.title {
+  font-size: var(--kiro-font-size-xl);
+  color: var(--kiro-text);
+}

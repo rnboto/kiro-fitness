@@ -1,0 +1,27 @@
+.locked {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--kiro-space-4);
+  text-align: center;
+  min-height: 50vh;
+  padding: var(--kiro-space-6) var(--kiro-space-4);
+}
+
+.icon {
+  font-size: 2.5rem;
+}
+
+.message {
+  color: var(--kiro-text-muted);
+  max-width: 32ch;
+}
+
+.cta {
+  padding: var(--kiro-space-3) var(--kiro-space-5);
+  border-radius: var(--kiro-radius-pill);
+  background: var(--kiro-accent);
+  color: #06241b;
+  font-weight: 700;
+}
