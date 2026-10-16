@@ -10,6 +10,8 @@ import LockedScreen from './components/LockedScreen';
 import WelcomeScreen from './features/onboarding/WelcomeScreen';
 import PerfilScreen from './features/perfil/PerfilScreen';
 import NutricionScreen from './features/nutricion/NutricionScreen';
+import GimnasioScreen from './features/gimnasio/GimnasioScreen';
+import TimerFab from './features/timer/TimerFab';
 import styles from './App.module.css';
 
 /** Placeholder para pantallas que llegan en features posteriores. */
@@ -54,7 +56,7 @@ function AppContent() {
         screen = <NutricionScreen />;
         break;
       case 'gimnasio':
-        screen = <ComingSoon title="Gimnasio" />;
+        screen = <GimnasioScreen />;
         break;
       case 'estadisticas':
         screen = <ComingSoon title="Estadísticas" />;
@@ -70,6 +72,9 @@ function AppContent() {
       <main className={styles.content}>
         <div className="app-shell">{screen}</div>
       </main>
+      {/* FAB global del cronómetro/temporizador (feature B): accesible desde
+          cualquier pantalla. Independiente del RestTimer/SessionClock. */}
+      <TimerFab />
       <TabBar active={tab} onChange={setTab} />
     </div>
   );

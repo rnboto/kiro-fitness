@@ -1,0 +1,63 @@
+.screen {
+  display: flex;
+  flex-direction: column;
+  gap: var(--kiro-space-5);
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--kiro-space-1);
+}
+
+.title {
+  font-size: var(--kiro-font-size-xl);
+}
+
+.subtitle {
+  color: var(--kiro-text-muted);
+}
+
+.days {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--kiro-space-2);
+}
+
+.dayBtn {
+  padding: var(--kiro-space-3) var(--kiro-space-2);
+  border-radius: var(--kiro-radius-md);
+  background: var(--kiro-surface-2);
+  border: 1px solid var(--kiro-border);
+  color: var(--kiro-text-muted);
+  font-weight: 700;
+  font-size: var(--kiro-font-size-sm);
+}
+
+.dayActive {
+  background: var(--kiro-accent);
+  color: #06241b;
+  border-color: var(--kiro-accent);
+}
+
+.chronoBtn {
+  padding: var(--kiro-space-3);
+  border-radius: var(--kiro-radius-md);
+  background: var(--kiro-surface-2);
+  border: 1px solid var(--kiro-border);
+  color: var(--kiro-text);
+  font-weight: 700;
+  font-size: var(--kiro-font-size-sm);
+}
+
+.exercises {
+  display: flex;
+  flex-direction: column;
+  gap: var(--kiro-space-4);
+}
+
+@media (max-width: 420px) {
+  .days {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}

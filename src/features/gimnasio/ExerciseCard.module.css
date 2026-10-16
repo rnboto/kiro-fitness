@@ -1,0 +1,89 @@
+.card {
+  background: var(--kiro-surface);
+  border: 1px solid var(--kiro-border);
+  border-radius: var(--kiro-radius-lg);
+  padding: var(--kiro-space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--kiro-space-4);
+}
+
+.header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--kiro-space-3);
+}
+
+.name {
+  font-size: var(--kiro-font-size-lg);
+}
+
+.scheme {
+  color: var(--kiro-accent);
+  font-weight: 700;
+  font-size: var(--kiro-font-size-sm);
+  white-space: nowrap;
+}
+
+.images {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--kiro-space-3);
+}
+
+.figure {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--kiro-space-1);
+}
+
+.image,
+.placeholder {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border-radius: var(--kiro-radius-md);
+  background: var(--kiro-surface-2);
+  border: 1px solid var(--kiro-border);
+  object-fit: cover;
+}
+
+.placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--kiro-space-1);
+  padding: var(--kiro-space-3);
+  text-align: center;
+}
+
+.placeholderSvg {
+  width: 48px;
+  height: 48px;
+  fill: var(--kiro-text-dim);
+}
+
+.placeholderName {
+  font-size: var(--kiro-font-size-xs);
+  color: var(--kiro-text-muted);
+  font-weight: 600;
+}
+
+.placeholderPhase {
+  font-size: var(--kiro-font-size-xs);
+  color: var(--kiro-text-dim);
+}
+
+.phaseCaption {
+  font-size: var(--kiro-font-size-xs);
+  color: var(--kiro-text-dim);
+  text-align: center;
+}
+
+.sets {
+  display: flex;
+  flex-direction: column;
+  gap: var(--kiro-space-3);
+}
