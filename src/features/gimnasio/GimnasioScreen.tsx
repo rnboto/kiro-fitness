@@ -5,7 +5,11 @@
 
 import { useMemo, useState } from 'react';
 import { useSettings } from '../../context/SettingsContext';
-import { routine, type DayId } from '../../domain/routine';
+import {
+  routinesByPhase,
+  type DayId,
+  type RoutineWeekPhase,
+} from '../../domain/routine';
 import Modal from '../../components/Modal';
 import SegmentedControl, {
   type SegmentOption,
@@ -24,22 +28,40 @@ const MODE_SEGMENTS: SegmentOption<GymMode>[] = [
   { id: 'cardio', label: 'Cardio' },
 ];
 
+const PHASE_SEGMENTS: SegmentOption<RoutineWeekPhase>[] = [
+  { id: 'semana1', label: 'Semana 1' },
+  { id: 'semana2plus', label: 'Semana 2+' },
+];
+
 export default function GimnasioScreen() {
-  const { settings } = useSettings();
+  const { settings, updateSettings } = useSettings();
   const [mode, setMode] = useState<GymMode>('musculacion');
-  const [dayId, setDayId] = useState<DayId>('torsoA');
+  const [dayId, setDayId] = useState<DayId>(routinesByPhase.semana1[0].id);
   const [chronoOpen, setChronoOpen] = useState(false);
 
-  const day = useMemo(() => routine.find((d) => d.id === dayId) ?? routine[0], [dayId]);
+  const phase = settings?.routineWeekPhase ?? 'semana1';
+  const days = routinesByPhase[phase];
+  // Clamp: si el dayId actual no existe en la fase activa, cae al primer día
+  // para que un id obsoleto nunca produzca una vista vacía.
+  const day = useMemo(
+    () => days.find((d) => d.id === dayId) ?? days[0],
+    [days, dayId],
+  );
   const restSeconds = settings?.restSeconds ?? 60;
   const overrides = settings?.exerciseOverrides ?? {};
+
+  const handlePhaseChange = (next: RoutineWeekPhase) => {
+    if (settings) updateSettings({ ...settings, routineWeekPhase: next });
+    setDayId(routinesByPhase[next][0].id);
+  };
 
   return (
     <div className={styles.screen}>
       <header className={styles.header}>
         <h1 className={styles.title}>Gimnasio</h1>
         <p className={styles.subtitle}>
-          Torso/Pierna · 4 días · pensado para caber en 60 minutos.
+          Dos fases · Semana 1 variada y Semana 2+ por grupos · 4 días cada
+          una, pensadas para caber en 60 minutos.
         </p>
       </header>
 
@@ -54,8 +76,15 @@ export default function GimnasioScreen() {
         <CardioView />
       ) : (
         <>
+          <SegmentedControl
+            options={PHASE_SEGMENTS}
+            value={phase}
+            onChange={handlePhaseChange}
+            ariaLabel="Fase de la rutina"
+          />
+
           <nav className={styles.days} aria-label="Día de entrenamiento">
-        {routine.map((d) => (
+        {days.map((d) => (
           <button
             key={d.id}
             type="button"

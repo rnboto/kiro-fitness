@@ -45,15 +45,20 @@ function Figure({
   phase: string;
 }) {
   const [failed, setFailed] = useState(false);
+  // Un src vacío o solo con espacios se trata como fallo: mostramos el
+  // placeholder en lugar de un <img> roto.
+  const blank = src.trim() === '';
   return (
     <figure className={styles.figure}>
-      {failed ? (
+      {failed || blank ? (
         <Placeholder name={name} phase={phase} />
       ) : (
         <img
           className={styles.image}
           src={src}
           alt={`${name} — ${phase}`}
+          width={320}
+          height={320}
           loading="lazy"
           onError={() => setFailed(true)}
         />

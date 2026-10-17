@@ -60,6 +60,9 @@ export default function MuscleHeatMap({ activeMuscles }: MuscleHeatMapProps) {
           {/* Bíceps */}
           <path id="biceps" className={regionClass('biceps')}
             d="M31 60 h14 v24 h-14 z M75 60 h14 v24 h-14 z" />
+          {/* Antebrazos (frontal) */}
+          <path id="forearms" className={regionClass('forearms')}
+            d="M31 86 h14 v22 h-14 z M75 86 h14 v22 h-14 z" />
           {/* Abdomen */}
           <path id="abs" className={regionClass('abs')}
             d="M46 70 h28 v30 h-28 z" />
@@ -90,12 +93,18 @@ export default function MuscleHeatMap({ activeMuscles }: MuscleHeatMapProps) {
             <rect x="62" y="104" width="14" height="80" rx="7" />
           </g>
 
+          {/* Trapecio (parte alta de la espalda / cuello) */}
+          <path id="traps" className={regionClass('traps')}
+            d="M46 38 h28 v8 h-28 z" />
           {/* Espalda */}
           <path id="back" className={regionClass('back')}
             d="M42 46 h36 v34 h-36 z" />
           {/* Tríceps */}
           <path id="triceps" className={regionClass('triceps')}
             d="M31 56 h14 v26 h-14 z M75 56 h14 v26 h-14 z" />
+          {/* Antebrazos (trasero) */}
+          <path id="forearms" className={regionClass('forearms')}
+            d="M31 86 h14 v22 h-14 z M75 86 h14 v22 h-14 z" />
           {/* Glúteos */}
           <path id="glutes" className={regionClass('glutes')}
             d="M44 94 h32 v22 h-32 z" />
