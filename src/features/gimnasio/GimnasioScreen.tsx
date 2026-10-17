@@ -20,13 +20,15 @@ import MuscleHeatMap from './MuscleHeatMap';
 import SessionClock from './SessionClock';
 import ExerciseCard from './ExerciseCard';
 import CardioView from './CardioView';
+import AbsView from './AbsView';
 import styles from './GimnasioScreen.module.css';
 
-type GymMode = 'musculacion' | 'cardio';
+type GymMode = 'musculacion' | 'cardio' | 'abdominales';
 
 const MODE_SEGMENTS: SegmentOption<GymMode>[] = [
   { id: 'musculacion', label: 'Musculación' },
   { id: 'cardio', label: 'Cardio' },
+  { id: 'abdominales', label: 'Abdominales' },
 ];
 
 const PHASE_SEGMENTS: SegmentOption<RoutineWeekPhase>[] = [
@@ -73,7 +75,9 @@ export default function GimnasioScreen() {
         ariaLabel="Tipo de entrenamiento"
       />
 
-      {mode === 'cardio' ? (
+      {mode === 'abdominales' ? (
+        <AbsView />
+      ) : mode === 'cardio' ? (
         <CardioView />
       ) : (
         <>

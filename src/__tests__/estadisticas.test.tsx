@@ -3,10 +3,11 @@
 // global del Cronómetro/Temporizador está presente en el árbol (FEAT-005).
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { render, screen, cleanup, within } from '@testing-library/react';
+import { render, screen, cleanup, within, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import App from '../App';
 import { __resetBackendForTests } from '../storage/db';
+import { getAllEntries } from '../storage';
 
 beforeEach(() => {
   localStorage.clear();
@@ -80,5 +81,55 @@ describe('Estadísticas y FAB (FEAT-005)', () => {
       screen.getByRole('heading', { name: /Objetivo nutricional/i }),
     ).toBeInTheDocument();
     expect(screen.getByRole('group', { name: /rango temporal/i })).toBeInTheDocument();
+  });
+
+  it('la tab Cuerpo tiene el formulario de registro y las gráficas de progreso', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await completeOnboarding(user);
+
+    const nav = screen.getByRole('navigation', { name: /navegación principal/i });
+    await user.click(within(nav).getByRole('button', { name: /Estadísticas/i }));
+
+    // Cuerpo es la tab por defecto: debe mostrar el formulario y las gráficas.
+    expect(
+      screen.getByRole('heading', { name: /Registrar medición/i }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /Nueva medición/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: /Composición corporal/i }),
+    ).toBeInTheDocument();
+  });
+
+  it('guardar una medición desde Cuerpo inserta una nueva ProfileEntry (el histórico crece)', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await completeOnboarding(user);
+
+    // El onboarding deja 1 entrada en el histórico.
+    await waitFor(async () => {
+      expect((await getAllEntries()).length).toBe(1);
+    });
+
+    const nav = screen.getByRole('navigation', { name: /navegación principal/i });
+    await user.click(within(nav).getByRole('button', { name: /Estadísticas/i }));
+
+    // Rellenar el formulario de la tab Cuerpo con nuevos valores y guardar.
+    const weightInput = await screen.findByLabelText(/Peso total/i);
+    await user.clear(weightInput);
+    await user.type(weightInput, '82');
+    const mmeInput = screen.getByLabelText(/Masa muscular esquelética/i);
+    await user.clear(mmeInput);
+    await user.type(mmeInput, '39');
+
+    await user.click(screen.getByRole('button', { name: /Guardar medición/i }));
+    await screen.findByText(/Medición guardada/i);
+
+    // El histórico creció a 2 (inserta, nunca sobrescribe).
+    await waitFor(async () => {
+      const entries = await getAllEntries();
+      expect(entries.length).toBe(2);
+      expect(entries.some((e) => e.weightKg === 82 && e.mmeKg === 39)).toBe(true);
+    });
   });
 });

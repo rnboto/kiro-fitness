@@ -1,9 +1,10 @@
-// Formulario de nueva medición en Perfil. SIEMPRE inserta una ProfileEntry nueva
-// datada (nunca sobrescribe). Reutiliza el fieldset y las validaciones Evolt.
+// Formulario de nueva medición en Estadísticas · Cuerpo. SIEMPRE inserta una
+// ProfileEntry nueva datada (nunca sobrescribe). Reutiliza el fieldset y las
+// validaciones Evolt compartidas (que viven en features/perfil/).
 
 import { useState } from 'react';
 import { useProfile } from '../../context/ProfileContext';
-import EvoltFieldset from './EvoltFieldset';
+import EvoltFieldset from '../perfil/EvoltFieldset';
 import {
   isValidDateIso,
   todayIso,
@@ -11,7 +12,7 @@ import {
   validateEvolt,
   type EvoltErrors,
   type EvoltFields,
-} from './evoltValidation';
+} from '../perfil/evoltValidation';
 import styles from './MeasurementForm.module.css';
 
 const EMPTY_FIELDS: EvoltFields = {

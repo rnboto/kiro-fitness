@@ -1,19 +1,18 @@
-// Pantalla Perfil: ficha actual (incluye age/sex, mostrados pero no usados en el
-// cálculo energético), formulario de nueva medición y gráficas de progreso.
+// Pantalla Perfil: ficha actual de solo lectura (incluye age/sex, mostrados pero
+// no usados en el cálculo energético). El registro de mediciones y las gráficas de
+// progreso viven ahora en Estadísticas · Cuerpo.
 
 import { useProfile } from '../../context/ProfileContext';
-import MeasurementForm from './MeasurementForm';
-import ProgressCharts from './ProgressCharts';
 import styles from './PerfilScreen.module.css';
 
 export default function PerfilScreen() {
-  const { profile, history } = useProfile();
+  const { profile } = useProfile();
 
   return (
     <div className={styles.screen}>
       <header className={styles.header}>
         <h1 className={styles.title}>Perfil & Evolt</h1>
-        <p className={styles.subtitle}>Tu estudio de bioimpedancia y tu progreso.</p>
+        <p className={styles.subtitle}>Tu estudio de bioimpedancia más reciente.</p>
       </header>
 
       {profile && (
@@ -49,25 +48,9 @@ export default function PerfilScreen() {
         </section>
       )}
 
-      <MeasurementForm
-        initial={
-          profile
-            ? {
-                age: profile.age,
-                heightCm: profile.heightCm,
-                sex: profile.sex,
-                weightKg: profile.weightKg,
-                bodyFatPct: profile.bodyFatPct,
-                mmeKg: profile.mmeKg,
-              }
-            : undefined
-        }
-      />
-
-      <section>
-        <h2 className={styles.sectionTitle}>Progreso</h2>
-        <ProgressCharts history={history} />
-      </section>
+      <p className={styles.hint}>
+        Consulta tu evolución y registra nuevas mediciones en Estadísticas &gt; Cuerpo.
+      </p>
     </div>
   );
 }

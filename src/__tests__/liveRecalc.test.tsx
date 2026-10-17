@@ -28,7 +28,7 @@ async function completeOnboarding(user: ReturnType<typeof userEvent.setup>) {
 }
 
 describe('Recálculo en vivo de Nutrición', () => {
-  it('cambiar el peso en Perfil actualiza los totales en Nutrición', async () => {
+  it('registrar una medición en Estadísticas · Cuerpo actualiza los totales en Nutrición', async () => {
     const user = userEvent.setup();
     render(<App />);
     await completeOnboarding(user);
@@ -42,8 +42,9 @@ describe('Recálculo en vivo de Nutrición', () => {
     );
     expect(kcalBefore).toBeGreaterThan(0);
 
-    // Volver a Perfil y registrar una medición con más peso/MME.
-    await user.click(screen.getByRole('button', { name: /Perfil/i }));
+    // Ir a Estadísticas · Cuerpo y registrar una medición con más peso/MME desde
+    // el formulario que ahora vive en esa pestaña (es la tab por defecto).
+    await user.click(screen.getByRole('button', { name: /Estadísticas/i }));
     const weightInput = await screen.findByLabelText(/Peso total/i);
     await user.clear(weightInput);
     await user.type(weightInput, '95');

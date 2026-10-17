@@ -1,5 +1,5 @@
 // Conjunto de campos Evolt reutilizable (edad, altura, sexo, peso, %grasa, MME).
-// Usado por WelcomeScreen (onboarding) y MeasurementForm (Perfil).
+// Usado por WelcomeScreen (onboarding) y MeasurementForm (Estadísticas · Cuerpo).
 
 import type { EvoltErrors, EvoltFields } from './evoltValidation';
 import styles from './EvoltFieldset.module.css';

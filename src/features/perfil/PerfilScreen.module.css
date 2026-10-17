@@ -55,9 +55,9 @@
   margin-top: 2px;
 }
 
-.sectionTitle {
-  font-size: var(--kiro-font-size-lg);
-  margin-bottom: var(--kiro-space-4);
+.hint {
+  color: var(--kiro-text-muted);
+  font-size: var(--kiro-font-size-sm);
 }
 
 @media (max-width: 420px) {

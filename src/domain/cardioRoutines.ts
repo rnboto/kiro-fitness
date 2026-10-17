@@ -13,6 +13,9 @@ export interface RoutineStep {
   durationSec: number;
   /** Pista de intensidad opcional (RPE), p.ej. 'RPE 8-9'. */
   intensity?: string;
+  /** Id de free-exercise-db para mostrar una miniatura del ejercicio (opcional).
+   *  El cardio no lo usa; lo aprovecha el circuito de abdominales. */
+  freeExerciseDbId?: string;
 }
 
 /** Bloque de rondas repetidas (para HIIT): se expande a work+rest × rounds. */
@@ -49,14 +52,20 @@ export interface ExpandedStep {
   label: string;
   durationSec: number;
   intensity?: string;
+  /** Id de free-exercise-db (opcional), copiado del paso original. */
+  freeExerciseDbId?: string;
 }
 
 /**
  * Expande los `elements` (incluyendo rondas) a una lista plana de pasos. PURA.
  * Para `kind:'step'` emite el paso; para `kind:'round'` emite `rounds` veces la
- * pareja work+rest en orden.
+ * pareja work+rest en orden. Opera sobre cualquier objeto con `elements`
+ * (supertipo estructural de `CardioRoutine`), así lo reutiliza también el
+ * circuito de abdominales sin ampliar los enums de máquina del cardio.
  */
-export function expandRoutineSteps(routine: CardioRoutine): ExpandedStep[] {
+export function expandRoutineSteps(routine: {
+  elements: RoutineElement[];
+}): ExpandedStep[] {
   const steps: ExpandedStep[] = [];
   for (const el of routine.elements) {
     if (el.kind === 'step') {
@@ -72,7 +81,7 @@ export function expandRoutineSteps(routine: CardioRoutine): ExpandedStep[] {
 }
 
 /** Suma de segundos de todos los pasos expandidos. PURA. */
-export function routineTotalSec(routine: CardioRoutine): number {
+export function routineTotalSec(routine: { elements: RoutineElement[] }): number {
   return expandRoutineSteps(routine).reduce((acc, s) => acc + s.durationSec, 0);
 }
 

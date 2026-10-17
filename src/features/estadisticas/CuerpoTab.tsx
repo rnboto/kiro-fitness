@@ -1,5 +1,7 @@
-// Pestaña Cuerpo: series de peso, % de grasa y MME del histórico Evolt,
-// filtradas por el rango seleccionado (recharts).
+// Pestaña Cuerpo: hogar único del progreso corporal. Incluye el formulario para
+// registrar nuevas mediciones y, debajo, las series de peso, % de grasa y MME del
+// histórico Evolt, filtradas por el rango seleccionado (recharts). Al guardar una
+// medición, el histórico del contexto se actualiza y las gráficas se refrescan.
 
 import { useMemo, useState } from 'react';
 import {
@@ -12,6 +14,7 @@ import {
   YAxis,
 } from 'recharts';
 import { useProfile } from '../../context/ProfileContext';
+import MeasurementForm from './MeasurementForm';
 import RangeSelector from './RangeSelector';
 import { selectBodyStats, type SeriesPoint, type StatsRange } from './statsSelectors';
 import styles from './tabs.module.css';
@@ -30,7 +33,7 @@ const SERIES: SeriesDef[] = [
 ];
 
 export default function CuerpoTab() {
-  const { history } = useProfile();
+  const { history, profile } = useProfile();
   const [range, setRange] = useState<StatsRange>('todo');
 
   const stats = useMemo(() => selectBodyStats(history, range), [history, range]);
@@ -39,6 +42,24 @@ export default function CuerpoTab() {
 
   return (
     <div className={styles.tab}>
+      <section className={styles.formSection}>
+        <h2 className={styles.tabTitle}>Registrar medición</h2>
+        <MeasurementForm
+          initial={
+            profile
+              ? {
+                  age: profile.age,
+                  heightCm: profile.heightCm,
+                  sex: profile.sex,
+                  weightKg: profile.weightKg,
+                  bodyFatPct: profile.bodyFatPct,
+                  mmeKg: profile.mmeKg,
+                }
+              : undefined
+          }
+        />
+      </section>
+
       <div className={styles.tabHead}>
         <h2 className={styles.tabTitle}>Composición corporal</h2>
         <RangeSelector value={range} onChange={setRange} />
@@ -46,7 +67,7 @@ export default function CuerpoTab() {
 
       {!hasData ? (
         <p className={styles.empty}>
-          Aún no hay mediciones en este rango. Registra tu peso en Perfil.
+          Aún no hay mediciones en este rango. Registra tu primera medición aquí arriba.
         </p>
       ) : (
         SERIES.map((s) => {
