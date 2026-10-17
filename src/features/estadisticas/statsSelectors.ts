@@ -2,7 +2,7 @@
 // Derivan series y resúmenes a partir del histórico de ProfileEntry y los
 // LoggedSet, filtrando por un rango temporal (design: feature A, Estadísticas).
 
-import type { LoggedSet, ProfileEntry } from '../../storage';
+import type { CardioSession, LoggedSet, ProfileEntry } from '../../storage';
 import {
   buildDailyPlan,
   type DailyPlan,
@@ -72,9 +72,34 @@ export interface NutritionSummary {
   warning?: DailyPlan['warning'];
 }
 
+/** Métricas de cardio por semana (km y minutos acumulados). */
+export interface WeeklyCardio {
+  weekStart: string; // 'YYYY-MM-DD' del lunes de esa semana
+  km: number;
+  min: number;
+}
+
+/** Totales de cardio por tipo (correr/bici). */
+export interface CardioTypeTotals {
+  km: number;
+  min: number;
+  sessions: number;
+}
+
+/** Estadísticas de la pestaña Cardio (separadas de la fuerza). */
+export interface CardioStats {
+  totalKm: number;
+  totalMin: number;
+  sessions: number;
+  perWeek: WeeklyCardio[];
+  byType: { correr: CardioTypeTotals; bici: CardioTypeTotals };
+}
+
 /** Estadísticas de adherencia (pestaña Adherencia). */
 export interface AdherenceStats {
-  workoutsCompleted: number; // nº de sesiones distintas con sets registrados
+  workoutsCompleted: number; // nº de días distintos con sets de fuerza registrados
+  cardioDays: number; // nº de días distintos con sesión de cardio
+  trainingDays: number; // nº de días con fuerza O cardio (unión)
   daysWithWeightLog: number; // nº de días distintos con medición de peso
   rangeDays: number | null; // días del rango ('todo' => null)
   perDayWorkouts: SeriesPoint[]; // sesiones por día (0/1) en el rango
@@ -239,13 +264,62 @@ export function selectNutritionSummary(
 }
 
 /**
- * Adherencia (pestaña Adherencia): entrenos completados (sesiones distintas con
- * sets registrados) y días con registro de peso (mediciones Evolt distintas),
- * ambos dentro del rango.
+ * Métricas de cardio (pestaña Cardio), totalmente separadas de la fuerza:
+ * total de km y minutos, nº de sesiones, acumulado por semana ISO y desglose
+ * por tipo (correr vs bici). Todo filtrado por el rango seleccionado.
+ */
+export function selectCardioStats(
+  sessions: CardioSession[],
+  range: StatsRange,
+  now: Date = new Date(),
+): CardioStats {
+  const start = rangeStart(range, now);
+  const filtered = sessions.filter((s) => inRange(s.date, start, now));
+
+  let totalKm = 0;
+  let totalMin = 0;
+  const byType = {
+    correr: { km: 0, min: 0, sessions: 0 },
+    bici: { km: 0, min: 0, sessions: 0 },
+  };
+  const byWeek = new Map<string, WeeklyCardio>();
+
+  for (const s of filtered) {
+    totalKm += s.distanceKm;
+    totalMin += s.durationMin;
+    byType[s.type].km += s.distanceKm;
+    byType[s.type].min += s.durationMin;
+    byType[s.type].sessions += 1;
+
+    const wk = weekStartKey(s.date);
+    const acc = byWeek.get(wk) ?? { weekStart: wk, km: 0, min: 0 };
+    acc.km += s.distanceKm;
+    acc.min += s.durationMin;
+    byWeek.set(wk, acc);
+  }
+
+  const perWeek = Array.from(byWeek.values()).sort((a, b) =>
+    a.weekStart.localeCompare(b.weekStart),
+  );
+
+  return {
+    totalKm,
+    totalMin,
+    sessions: filtered.length,
+    perWeek,
+    byType,
+  };
+}
+
+/**
+ * Adherencia (pestaña Adherencia): días con entreno de fuerza, días con sesión
+ * de cardio y la UNIÓN de ambos (un día que combina fuerza y cardio cuenta una
+ * sola vez), más los días con registro de peso. Todo dentro del rango.
  */
 export function selectAdherenceStats(
   sets: LoggedSet[],
   history: ProfileEntry[],
+  cardio: CardioSession[],
   range: StatsRange,
   now: Date = new Date(),
 ): AdherenceStats {
@@ -256,17 +330,26 @@ export function selectAdherenceStats(
     if (inRange(s.date, start, now)) workoutDays.add(toDayKey(s.date));
   }
 
+  const cardioDaysSet = new Set<string>();
+  for (const c of cardio) {
+    if (inRange(c.date, start, now)) cardioDaysSet.add(toDayKey(c.date));
+  }
+
+  const trainingDaysSet = new Set<string>([...workoutDays, ...cardioDaysSet]);
+
   const weightDays = new Set<string>();
   for (const e of history) {
     if (inRange(e.date, start, now)) weightDays.add(toDayKey(e.date));
   }
 
-  const perDayWorkouts: SeriesPoint[] = Array.from(workoutDays)
+  const perDayWorkouts: SeriesPoint[] = Array.from(trainingDaysSet)
     .sort((a, b) => a.localeCompare(b))
     .map((date) => ({ date, value: 1 }));
 
   return {
     workoutsCompleted: workoutDays.size,
+    cardioDays: cardioDaysSet.size,
+    trainingDays: trainingDaysSet.size,
     daysWithWeightLog: weightDays.size,
     rangeDays: range === 'todo' ? null : RANGE_DAYS[range],
     perDayWorkouts,

@@ -3,14 +3,50 @@
 // de entreno (clamp 05:00–10:00), el descanso por defecto (45–60 s) y los
 // overrides de imágenes por ejercicio. Persiste vía SettingsContext.
 
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useSettings } from '../../context/SettingsContext';
 import type { Settings } from '../../storage';
+import { exportAll, importMerge, importReplace } from '../../storage';
+import {
+  parseBackup,
+  serializeBackup,
+  toCsv,
+  type KiroBackup,
+} from '../../domain/dataPorting';
 import { routine } from '../../domain/routine';
 import NumberStepper from '../../components/NumberStepper';
 import Slider from '../../components/Slider';
+import Modal from '../../components/Modal';
 import AboutFooter from './AboutFooter';
 import styles from './SettingsPanel.module.css';
+
+/** Descarga un Blob con nombre de archivo (sin librerías externas). */
+function downloadBlob(filename: string, mime: string, text: string): void {
+  const blob = new Blob([text], { type: mime });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+/** 'YYYY-MM-DD' de una fecha local (para nombres de archivo). */
+function todayStamp(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
+/** Inicio del rango por preset Semana/Mes a partir de hoy. */
+function presetFrom(preset: 'semana' | 'mes'): string {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  d.setDate(d.getDate() - (preset === 'semana' ? 6 : 29));
+  return d.toISOString().slice(0, 10);
+}
+
+type CsvRange = 'semana' | 'mes' | 'personalizado';
 
 /** Clampa 'HH:mm' al rango matutino 05:00–10:00 (design §6.2). */
 function clampTrainingStart(hhmm: string): string {
@@ -34,6 +70,85 @@ export default function SettingsPanel() {
     return Array.from(seen.entries()).map(([id, name]) => ({ id, name }));
   }, []);
   const [openOverride, setOpenOverride] = useState<string | null>(null);
+
+  // --- Export / Import ---
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [csvRange, setCsvRange] = useState<CsvRange>('mes');
+  const [csvFrom, setCsvFrom] = useState<string>(presetFrom('mes'));
+  const [csvTo, setCsvTo] = useState<string>(todayStamp());
+  const [pendingBackup, setPendingBackup] = useState<KiroBackup | null>(null);
+  const [importError, setImportError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  const handleExportJson = async () => {
+    setBusy(true);
+    try {
+      const backup = await exportAll();
+      downloadBlob(
+        `kiro-backup-${todayStamp()}.json`,
+        'application/json',
+        serializeBackup(backup),
+      );
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleExportCsv = async () => {
+    setBusy(true);
+    try {
+      const from =
+        csvRange === 'personalizado' ? new Date(csvFrom) : new Date(presetFrom(csvRange));
+      const to = csvRange === 'personalizado' ? new Date(csvTo) : new Date();
+      const backup = await exportAll();
+      const csv = toCsv(
+        {
+          profiles: backup.profiles,
+          sets: backup.sets,
+          cardio: backup.cardio,
+          settings: backup.settings,
+        },
+        from,
+        to,
+      );
+      downloadBlob(`kiro-datos-${todayStamp()}.csv`, 'text/csv;charset=utf-8', csv);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = ''; // permite reseleccionar el mismo archivo
+    if (!file) return;
+    setImportError(null);
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = parseBackup(String(reader.result ?? ''));
+      if (!result.ok) {
+        setImportError(result.error);
+        return;
+      }
+      setPendingBackup(result.backup);
+    };
+    reader.onerror = () => setImportError('No se pudo leer el archivo.');
+    reader.readAsText(file);
+  };
+
+  const applyImport = async (mode: 'merge' | 'replace') => {
+    if (!pendingBackup) return;
+    setBusy(true);
+    try {
+      if (mode === 'merge') await importMerge(pendingBackup);
+      else await importReplace(pendingBackup);
+      setPendingBackup(null);
+      // Recarga para que contexts y listas reflejen los datos importados.
+      window.location.reload();
+    } catch {
+      setImportError('No se pudieron importar los datos. No se ha modificado nada.');
+      setBusy(false);
+    }
+  };
 
   if (!settings) {
     return <p className={styles.loading}>Cargando ajustes…</p>;
@@ -192,6 +307,126 @@ export default function SettingsPanel() {
           })}
         </ul>
       </section>
+
+      <section className={styles.card}>
+        <h2 className={styles.cardTitle}>Datos y copias de seguridad</h2>
+        <p className={styles.hint}>
+          Exporta tus datos para compartirlos o guardarlos, o impórtalos en este
+          dispositivo. Todo se procesa en local.
+        </p>
+
+        <button
+          type="button"
+          className={styles.dataBtn}
+          onClick={handleExportJson}
+          disabled={busy}
+        >
+          Exportar todo (JSON)
+        </button>
+
+        <div className={styles.dataGroup}>
+          <span className={styles.dataGroupTitle}>Exportar por rango (CSV)</span>
+          <div className={styles.rangeChips} role="group" aria-label="Rango del CSV">
+            {(['semana', 'mes', 'personalizado'] as CsvRange[]).map((r) => (
+              <button
+                key={r}
+                type="button"
+                className={`${styles.chip} ${csvRange === r ? styles.chipActive : ''}`}
+                aria-pressed={csvRange === r}
+                onClick={() => setCsvRange(r)}
+              >
+                {r === 'semana' ? 'Semana' : r === 'mes' ? 'Mes' : 'Personalizado'}
+              </button>
+            ))}
+          </div>
+          {csvRange === 'personalizado' && (
+            <div className={styles.dateRow}>
+              <label className={styles.field}>
+                <span>Desde</span>
+                <input
+                  type="date"
+                  value={csvFrom}
+                  max={csvTo}
+                  onChange={(e) => setCsvFrom(e.target.value)}
+                />
+              </label>
+              <label className={styles.field}>
+                <span>Hasta</span>
+                <input
+                  type="date"
+                  value={csvTo}
+                  min={csvFrom}
+                  onChange={(e) => setCsvTo(e.target.value)}
+                />
+              </label>
+            </div>
+          )}
+          <button
+            type="button"
+            className={styles.dataBtn}
+            onClick={handleExportCsv}
+            disabled={busy}
+          >
+            Descargar CSV
+          </button>
+        </div>
+
+        <div className={styles.dataGroup}>
+          <span className={styles.dataGroupTitle}>Importar datos (JSON)</span>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="application/json"
+            className={styles.fileInput}
+            onChange={handleFile}
+          />
+          <button
+            type="button"
+            className={styles.dataBtn}
+            onClick={() => fileInputRef.current?.click()}
+            disabled={busy}
+          >
+            Elegir archivo…
+          </button>
+          {importError && (
+            <p className={styles.importError} role="alert">
+              {importError}
+            </p>
+          )}
+        </div>
+      </section>
+
+      <Modal
+        open={pendingBackup !== null}
+        title="Importar datos"
+        onClose={() => setPendingBackup(null)}
+      >
+        <div className={styles.confirmBody}>
+          <p>
+            ¿Cómo quieres importar los datos del archivo? <strong>Fusionar</strong>{' '}
+            añade lo que falte sin borrar nada. <strong>Reemplazar</strong> borra
+            todos tus datos actuales y carga solo los del archivo.
+          </p>
+          <div className={styles.confirmActions}>
+            <button
+              type="button"
+              className={styles.dataBtn}
+              onClick={() => void applyImport('merge')}
+              disabled={busy}
+            >
+              Fusionar
+            </button>
+            <button
+              type="button"
+              className={styles.dangerBtn}
+              onClick={() => void applyImport('replace')}
+              disabled={busy}
+            >
+              Reemplazar (borra lo actual)
+            </button>
+          </div>
+        </div>
+      </Modal>
 
       <AboutFooter />
     </div>

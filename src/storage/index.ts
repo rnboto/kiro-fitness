@@ -3,6 +3,7 @@ export type {
   DayId,
   ProfileEntry,
   LoggedSet,
+  CardioSession,
   Settings,
   ReminderSettings,
 } from './types';
@@ -24,4 +25,13 @@ export {
   type NewLoggedSet,
 } from './workoutLogStore';
 
+export {
+  addCardioSession,
+  getAllCardioSessions,
+  deleteCardioSession,
+  type NewCardioSession,
+} from './cardioStore';
+
 export { getSettings, saveSettings } from './settingsStore';
+
+export { exportAll, importReplace, importMerge } from './backup';

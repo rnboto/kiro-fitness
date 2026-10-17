@@ -27,6 +27,17 @@ export interface LoggedSet {
   reps: number;
 }
 
+/** Sesión de cardio (aeróbico): correr o bici. */
+export interface CardioSession {
+  id: number; // autoincrement
+  date: string; // ISO 8601
+  type: 'correr' | 'bici';
+  durationMin: number; // duración en minutos
+  distanceKm: number; // distancia en km
+  calories?: number; // calorías estimadas (opcional)
+  notes?: string; // notas libres (opcional)
+}
+
 /** Configuración de recordatorios (design §5). */
 export interface ReminderSettings {
   weightLog: { enabled: boolean; time: string }; // 'HH:mm'

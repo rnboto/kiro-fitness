@@ -39,7 +39,7 @@ describe('Estadísticas y FAB (FEAT-005)', () => {
     ).toBeInTheDocument();
   });
 
-  it('Estadísticas muestra el control segmentado con 4 tabs internas', async () => {
+  it('Estadísticas muestra el control segmentado con 5 tabs internas', async () => {
     const user = userEvent.setup();
     render(<App />);
     await completeOnboarding(user);
@@ -52,12 +52,13 @@ describe('Estadísticas y FAB (FEAT-005)', () => {
       screen.getByRole('heading', { name: /^Estadísticas$/i }),
     ).toBeInTheDocument();
 
-    // Control segmentado (tablist) con las 4 tabs internas.
+    // Control segmentado (tablist) con las 5 tabs internas.
     const tablist = screen.getByRole('tablist', { name: /sección de estadísticas/i });
     const tabs = within(tablist).getAllByRole('tab');
     expect(tabs.map((t) => t.textContent)).toEqual([
       'Cuerpo',
       'Fuerza',
+      'Cardio',
       'Nutrición',
       'Adherencia',
     ]);

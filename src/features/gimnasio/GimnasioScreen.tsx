@@ -7,14 +7,26 @@ import { useMemo, useState } from 'react';
 import { useSettings } from '../../context/SettingsContext';
 import { routine, type DayId } from '../../domain/routine';
 import Modal from '../../components/Modal';
+import SegmentedControl, {
+  type SegmentOption,
+} from '../estadisticas/SegmentedControl';
 import ChronoTool from '../timer/ChronoTool';
 import MuscleHeatMap from './MuscleHeatMap';
 import SessionClock from './SessionClock';
 import ExerciseCard from './ExerciseCard';
+import CardioView from './CardioView';
 import styles from './GimnasioScreen.module.css';
+
+type GymMode = 'musculacion' | 'cardio';
+
+const MODE_SEGMENTS: SegmentOption<GymMode>[] = [
+  { id: 'musculacion', label: 'Musculación' },
+  { id: 'cardio', label: 'Cardio' },
+];
 
 export default function GimnasioScreen() {
   const { settings } = useSettings();
+  const [mode, setMode] = useState<GymMode>('musculacion');
   const [dayId, setDayId] = useState<DayId>('torsoA');
   const [chronoOpen, setChronoOpen] = useState(false);
 
@@ -31,7 +43,18 @@ export default function GimnasioScreen() {
         </p>
       </header>
 
-      <nav className={styles.days} aria-label="Día de entrenamiento">
+      <SegmentedControl
+        options={MODE_SEGMENTS}
+        value={mode}
+        onChange={setMode}
+        ariaLabel="Tipo de entrenamiento"
+      />
+
+      {mode === 'cardio' ? (
+        <CardioView />
+      ) : (
+        <>
+          <nav className={styles.days} aria-label="Día de entrenamiento">
         {routine.map((d) => (
           <button
             key={d.id}
@@ -69,13 +92,15 @@ export default function GimnasioScreen() {
         ))}
       </div>
 
-      <Modal
-        open={chronoOpen}
-        title="Cronómetro / Temporizador"
-        onClose={() => setChronoOpen(false)}
-      >
-        <ChronoTool />
-      </Modal>
+          <Modal
+            open={chronoOpen}
+            title="Cronómetro / Temporizador"
+            onClose={() => setChronoOpen(false)}
+          >
+            <ChronoTool />
+          </Modal>
+        </>
+      )}
     </div>
   );
 }

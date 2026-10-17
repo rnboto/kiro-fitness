@@ -3,7 +3,12 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useProfile } from '../../context/ProfileContext';
-import { getAllSets, type LoggedSet } from '../../storage';
+import {
+  getAllCardioSessions,
+  getAllSets,
+  type CardioSession,
+  type LoggedSet,
+} from '../../storage';
 import RangeSelector from './RangeSelector';
 import { selectAdherenceStats, type StatsRange } from './statsSelectors';
 import styles from './tabs.module.css';
@@ -12,12 +17,19 @@ export default function AdherenciaTab() {
   const { history } = useProfile();
   const [range, setRange] = useState<StatsRange>('mes');
   const [sets, setSets] = useState<LoggedSet[]>([]);
+  const [cardio, setCardio] = useState<CardioSession[]>([]);
 
   useEffect(() => {
     let active = true;
     (async () => {
-      const all = await getAllSets();
-      if (active) setSets(all);
+      const [allSets, allCardio] = await Promise.all([
+        getAllSets(),
+        getAllCardioSessions(),
+      ]);
+      if (active) {
+        setSets(allSets);
+        setCardio(allCardio);
+      }
     })();
     return () => {
       active = false;
@@ -25,8 +37,8 @@ export default function AdherenciaTab() {
   }, []);
 
   const stats = useMemo(
-    () => selectAdherenceStats(sets, history, range),
-    [sets, history, range],
+    () => selectAdherenceStats(sets, history, cardio, range),
+    [sets, history, cardio, range],
   );
 
   const rangeLabel = stats.rangeDays ? `últimos ${stats.rangeDays} días` : 'todo el histórico';
@@ -40,8 +52,16 @@ export default function AdherenciaTab() {
 
       <div className={styles.metrics}>
         <div className={styles.metric}>
-          <span className={styles.metricLabel}>Entrenos completados</span>
+          <span className={styles.metricLabel}>Días entrenados (fuerza o cardio)</span>
+          <span className={styles.metricValue}>{stats.trainingDays}</span>
+        </div>
+        <div className={styles.metric}>
+          <span className={styles.metricLabel}>Entrenos de fuerza</span>
           <span className={styles.metricValue}>{stats.workoutsCompleted}</span>
+        </div>
+        <div className={styles.metric}>
+          <span className={styles.metricLabel}>Sesiones de cardio</span>
+          <span className={styles.metricValue}>{stats.cardioDays}</span>
         </div>
         <div className={styles.metric}>
           <span className={styles.metricLabel}>Días con registro de peso</span>
@@ -53,7 +73,7 @@ export default function AdherenciaTab() {
         <h3 className={styles.cardTitle}>Resumen ({rangeLabel})</h3>
         {stats.perDayWorkouts.length === 0 ? (
           <p className={styles.empty}>
-            Aún no hay entrenos registrados en este rango. Registra tus series en
+            Aún no hay días entrenados en este rango. Registra fuerza o cardio en
             Gimnasio para medir tu constancia.
           </p>
         ) : (
@@ -61,7 +81,7 @@ export default function AdherenciaTab() {
             {stats.perDayWorkouts.map((d) => (
               <div key={d.date} className={styles.row}>
                 <span className={styles.rowName}>{d.date}</span>
-                <span className={styles.rowMeta}>Entreno registrado</span>
+                <span className={styles.rowMeta}>Día entrenado</span>
               </div>
             ))}
           </div>

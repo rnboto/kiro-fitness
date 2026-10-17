@@ -1,13 +1,14 @@
 // Tests de los selectores PUROS de Estadísticas (design feature A, §12).
 
 import { describe, expect, it } from 'vitest';
-import type { LoggedSet, ProfileEntry } from '../../../storage';
+import type { CardioSession, LoggedSet, ProfileEntry } from '../../../storage';
 import type { NutritionInput } from '../../../domain/nutrition';
 import {
   epleyOneRepMax,
   rangeStart,
   selectAdherenceStats,
   selectBodyStats,
+  selectCardioStats,
   selectNutritionSummary,
   selectStrengthStats,
   toDayKey,
@@ -40,6 +41,18 @@ function set(date: string, over: Partial<LoggedSet> = {}): LoggedSet {
     setIndex: 1,
     weightKg: 60,
     reps: 10,
+    ...over,
+  };
+}
+
+let cardioId = 0;
+function cardio(date: string, over: Partial<CardioSession> = {}): CardioSession {
+  return {
+    id: ++cardioId,
+    date,
+    type: 'correr',
+    durationMin: 30,
+    distanceKm: 5,
     ...over,
   };
 }
@@ -168,6 +181,43 @@ describe('selectNutritionSummary', () => {
   });
 });
 
+describe('selectCardioStats', () => {
+  const sessions: CardioSession[] = [
+    // Semana del lunes 2024-06-10.
+    cardio('2024-06-10T07:00:00.000Z', { type: 'correr', durationMin: 30, distanceKm: 5 }),
+    cardio('2024-06-12T07:00:00.000Z', { type: 'bici', durationMin: 60, distanceKm: 20 }),
+    cardio('2024-06-14T07:00:00.000Z', { type: 'correr', durationMin: 25, distanceKm: 4 }),
+    // Fuera del rango mes.
+    cardio('2024-01-01T07:00:00.000Z', { type: 'bici', durationMin: 90, distanceKm: 30 }),
+  ];
+
+  it('suma total de km/min y nº de sesiones en el rango', () => {
+    const stats = selectCardioStats(sessions, 'mes', NOW);
+    expect(stats.sessions).toBe(3);
+    expect(stats.totalKm).toBeCloseTo(29, 5);
+    expect(stats.totalMin).toBe(115);
+  });
+
+  it('desglosa por tipo correr vs bici', () => {
+    const stats = selectCardioStats(sessions, 'mes', NOW);
+    expect(stats.byType.correr.sessions).toBe(2);
+    expect(stats.byType.correr.km).toBeCloseTo(9, 5);
+    expect(stats.byType.bici.sessions).toBe(1);
+    expect(stats.byType.bici.km).toBeCloseTo(20, 5);
+  });
+
+  it('agrupa por semana ISO y respeta el filtro de rango', () => {
+    const stats = selectCardioStats(sessions, 'mes', NOW);
+    // Las 3 sesiones del rango caen en la semana del lunes 2024-06-10.
+    expect(stats.perWeek).toHaveLength(1);
+    expect(stats.perWeek[0].weekStart).toBe('2024-06-10');
+    expect(stats.perWeek[0].km).toBeCloseTo(29, 5);
+    // La de enero queda fuera del rango 'mes'.
+    const todo = selectCardioStats(sessions, 'todo', NOW);
+    expect(todo.sessions).toBe(4);
+  });
+});
+
 describe('selectAdherenceStats', () => {
   const sets: LoggedSet[] = [
     set('2024-06-10T07:00:00.000Z'),
@@ -177,15 +227,29 @@ describe('selectAdherenceStats', () => {
   const history = [profile('2024-06-10'), profile('2024-06-14'), profile('2024-01-01')];
 
   it('cuenta entrenos (días distintos) y días con registro de peso', () => {
-    const stats = selectAdherenceStats(sets, history, 'mes', NOW);
+    const stats = selectAdherenceStats(sets, history, [], 'mes', NOW);
     expect(stats.workoutsCompleted).toBe(2);
     expect(stats.daysWithWeightLog).toBe(2); // la de enero queda fuera del mes
     expect(stats.rangeDays).toBe(30);
   });
 
   it('rango todo no limita y expone rangeDays null', () => {
-    const stats = selectAdherenceStats(sets, history, 'todo', NOW);
+    const stats = selectAdherenceStats(sets, history, [], 'todo', NOW);
     expect(stats.daysWithWeightLog).toBe(3);
     expect(stats.rangeDays).toBeNull();
+  });
+
+  it('cuenta cardio y hace la unión de días de fuerza y cardio', () => {
+    const cardioSessions: CardioSession[] = [
+      // Mismo día que un entreno de fuerza → la unión no lo cuenta dos veces.
+      cardio('2024-06-10T18:00:00.000Z'),
+      // Día de solo cardio.
+      cardio('2024-06-12T18:00:00.000Z'),
+    ];
+    const stats = selectAdherenceStats(sets, history, cardioSessions, 'mes', NOW);
+    expect(stats.workoutsCompleted).toBe(2); // fuerza: 06-10 y 06-14
+    expect(stats.cardioDays).toBe(2); // cardio: 06-10 y 06-12
+    // Unión de {06-10, 06-14} ∪ {06-10, 06-12} = {06-10, 06-12, 06-14} = 3.
+    expect(stats.trainingDays).toBe(3);
   });
 });

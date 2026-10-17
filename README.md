@@ -8,11 +8,17 @@ La app es instalable y funciona offline: el app shell y toda la lógica (nutrici
 
 - **Perfil & Evolt:** registro del estudio de bioimpedancia (edad, altura, sexo, peso, % de grasa y masa muscular esquelética) con histórico y gráficas de progreso.
 - **Nutrición:** plan diario derivado en vivo del perfil. Calcula el gasto con Katch-McArdle, aplica un déficit del 20% y reparte las calorías en 4 comidas (Pre-entreno, Post-entreno, Almuerzo, Cena) con gramos exactos en crudo y nota de peso cocinado.
-- **Gimnasio:** rutina Torso/Pierna (4 días × 5 ejercicios × 3 series), mapa de calor muscular, indicador de ritmo (TUT), temporizador de descanso, reloj de sesión y registro fluido de series.
-- **Estadísticas:** control segmentado con 4 secciones (Cuerpo, Fuerza, Nutrición, Adherencia) y selector de rango Semana/Mes/Todo. Muestra composición corporal, volumen y progresión de fuerza (1RM estimado por Epley), objetivo nutricional y constancia.
+- **Gimnasio:** control segmentado **Musculación / Cardio**.
+  - *Musculación:* rutina Torso/Pierna (4 días × 5 ejercicios × 3 series), mapa de calor muscular, indicador de ritmo (TUT), temporizador de descanso, reloj de sesión y registro fluido de series.
+  - *Cardio (aeróbico):* registro de sesiones de **correr** y **bici** (duración en minutos, distancia en km, calorías y notas opcionales), con lista de sesiones recientes y borrado. Se guarda por separado de la fuerza.
+- **Estadísticas:** control segmentado con 5 secciones (Cuerpo, Fuerza, Cardio, Nutrición, Adherencia) y selector de rango Semana/Mes/Todo. Muestra composición corporal, volumen y progresión de fuerza (1RM estimado por Epley), métricas de cardio (total de km/min, sesiones y desglose correr vs bici, sin mezclarse con la fuerza), objetivo nutricional y constancia. La **Adherencia** cuenta tanto los días de fuerza como los de cardio.
 - **Notificaciones:** recordatorios de registro de peso, hidratación y próximo test de bioimpedancia, con la lista de próximos avisos siempre calculada.
 - **Cronómetro / Temporizador:** herramienta global (botón flotante) con modo cuenta arriba (con vueltas) y cuenta atrás configurable.
 - **Ajustes:** factor de actividad, g/kg de proteína, base del cálculo BMR (avanzado), hora de entreno, descanso por defecto e imágenes propias por ejercicio.
+- **Datos y copias de seguridad (en Ajustes):** importa y exporta todos tus datos, sin servidor ni librerías externas.
+  - *Exportar todo (JSON):* descarga un único archivo con todo tu estado (perfil, series de fuerza, sesiones de cardio y ajustes) con versión de esquema y marca de tiempo. Reimportable sin pérdidas.
+  - *Exportar por rango (CSV):* elige Semana, Mes o un rango personalizado y descarga un CSV legible (una fila por entrada con columna `tipo`: medición / fuerza / cardio) para leer o compartir.
+  - *Importar datos (JSON):* elige un archivo y confirma el modo. **Fusionar** añade lo que falte por id sin borrar nada; **Reemplazar** borra tus datos actuales y carga solo los del archivo. Un archivo inválido se rechaza con un mensaje en español sin tocar tus datos; tras importar, la app se recarga para reflejar los datos.
 
 ## Stack
 
@@ -63,7 +69,7 @@ npm run typecheck  # tsc --noEmit
 
 ## Datos y privacidad
 
-No hay servidor ni cuenta: todos tus datos (perfil, series registradas y ajustes) viven solo en tu dispositivo.
+No hay servidor ni cuenta: todos tus datos (perfil, series registradas, sesiones de cardio y ajustes) viven solo en tu dispositivo. La exportación/importación de datos también se procesa 100% en local.
 
 ## Crédito
 

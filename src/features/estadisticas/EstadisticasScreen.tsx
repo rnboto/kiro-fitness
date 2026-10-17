@@ -7,15 +7,17 @@ import { useState } from 'react';
 import SegmentedControl, { type SegmentOption } from './SegmentedControl';
 import CuerpoTab from './CuerpoTab';
 import FuerzaTab from './FuerzaTab';
+import CardioTab from './CardioTab';
 import NutricionTab from './NutricionTab';
 import AdherenciaTab from './AdherenciaTab';
 import styles from './EstadisticasScreen.module.css';
 
-type InnerTab = 'cuerpo' | 'fuerza' | 'nutricion' | 'adherencia';
+type InnerTab = 'cuerpo' | 'fuerza' | 'cardio' | 'nutricion' | 'adherencia';
 
 const SEGMENTS: SegmentOption<InnerTab>[] = [
   { id: 'cuerpo', label: 'Cuerpo' },
   { id: 'fuerza', label: 'Fuerza' },
+  { id: 'cardio', label: 'Cardio' },
   { id: 'nutricion', label: 'Nutrición' },
   { id: 'adherencia', label: 'Adherencia' },
 ];
@@ -42,6 +44,7 @@ export default function EstadisticasScreen() {
       <div key={tab} className={styles.panel}>
         {tab === 'cuerpo' && <CuerpoTab />}
         {tab === 'fuerza' && <FuerzaTab />}
+        {tab === 'cardio' && <CardioTab />}
         {tab === 'nutricion' && <NutricionTab />}
         {tab === 'adherencia' && <AdherenciaTab />}
       </div>

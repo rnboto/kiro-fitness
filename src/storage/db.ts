@@ -6,7 +6,7 @@
 // La API expuesta es común a ambos backends. Las claves de autoincrement se
 // gestionan en JS cuando el backend es localStorage.
 
-export type StoreName = 'profiles' | 'workoutSets' | 'settings';
+export type StoreName = 'profiles' | 'workoutSets' | 'cardioSessions' | 'settings';
 
 /** Definición de un object store. */
 interface StoreDef {
@@ -18,7 +18,8 @@ interface StoreDef {
 }
 
 const DB_NAME = 'kiro-db';
-const DB_VERSION = 1;
+// v2: añade el object store 'cardioSessions' (feature cardio).
+const DB_VERSION = 2;
 
 const STORE_DEFS: StoreDef[] = [
   {
@@ -28,6 +29,7 @@ const STORE_DEFS: StoreDef[] = [
     indexes: [{ name: 'date', keyPath: 'date' }],
   },
   { name: 'workoutSets', keyPath: 'id', autoIncrement: true },
+  { name: 'cardioSessions', keyPath: 'id', autoIncrement: true },
   { name: 'settings', keyPath: 'key', autoIncrement: false },
 ];
 
@@ -52,6 +54,16 @@ export interface StorageBackend {
   getAll<T>(store: StoreName): Promise<T[]>;
   /** Devuelve los registros cuyo índice coincide con value. */
   getByIndex<T>(store: StoreName, indexName: string, value: IDBValidKey): Promise<T[]>;
+  /** Elimina un registro por su clave (no falla si no existe). */
+  delete(store: StoreName, key: IDBValidKey): Promise<void>;
+  /** Vacía por completo un store. */
+  clear(store: StoreName): Promise<void>;
+  /**
+   * Asegura que la próxima clave autogenerada supere `minSeq`. Necesario tras
+   * reinsertar registros con ids explícitos (import) para evitar colisiones.
+   * No-op en IndexedDB (gestiona su propio contador internamente).
+   */
+  ensureSeqAtLeast(store: StoreName, minSeq: number): Promise<void>;
 }
 
 // ---------------------------------------------------------------------------
@@ -125,6 +137,26 @@ class IndexedDbBackend implements StorageBackend {
       req.onsuccess = () => resolve((req.result as T[]) ?? []);
       req.onerror = () => reject(req.error);
     });
+  }
+
+  delete(store: StoreName, key: IDBValidKey): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const req = this.tx(store, 'readwrite').delete(key);
+      req.onsuccess = () => resolve();
+      req.onerror = () => reject(req.error);
+    });
+  }
+
+  clear(store: StoreName): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const req = this.tx(store, 'readwrite').clear();
+      req.onsuccess = () => resolve();
+      req.onerror = () => reject(req.error);
+    });
+  }
+
+  async ensureSeqAtLeast(): Promise<void> {
+    // IndexedDB actualiza su generador de claves al insertar con clave explícita.
   }
 }
 
@@ -201,6 +233,24 @@ class LocalStorageBackend implements StorageBackend {
   async getByIndex<T>(store: StoreName, indexName: string, value: IDBValidKey): Promise<T[]> {
     const rows = this.readAll<Record<string, unknown>>(store);
     return rows.filter((r) => r[indexName] === value) as T[];
+  }
+
+  async delete(store: StoreName, key: IDBValidKey): Promise<void> {
+    const def = storeDef(store);
+    const rows = this.readAll<Record<string, unknown>>(store);
+    const next = rows.filter((r) => r[def.keyPath] !== key);
+    this.writeAll(store, next);
+  }
+
+  async clear(store: StoreName): Promise<void> {
+    this.writeAll(store, []);
+    localStorage.removeItem(`${LS_SEQ_PREFIX}${store}`);
+  }
+
+  async ensureSeqAtLeast(store: StoreName, minSeq: number): Promise<void> {
+    const seqKey = `${LS_SEQ_PREFIX}${store}`;
+    const current = Number(localStorage.getItem(seqKey) ?? '0');
+    if (minSeq > current) localStorage.setItem(seqKey, String(minSeq));
   }
 }
 
