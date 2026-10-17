@@ -98,6 +98,8 @@ export default function GimnasioScreen() {
         ))}
       </nav>
 
+      <h2 className={styles.dayTitle}>{day.name}</h2>
+
       <MuscleHeatMap activeMuscles={day.muscles} />
 
       <SessionClock />

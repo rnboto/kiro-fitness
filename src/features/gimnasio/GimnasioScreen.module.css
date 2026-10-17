@@ -40,6 +40,11 @@
   border-color: var(--kiro-accent);
 }
 
+.dayTitle {
+  font-size: var(--kiro-font-size-lg);
+  font-weight: 700;
+}
+
 .chronoBtn {
   padding: var(--kiro-space-3);
   border-radius: var(--kiro-radius-md);
