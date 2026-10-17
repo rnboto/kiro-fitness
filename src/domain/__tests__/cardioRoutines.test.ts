@@ -47,10 +47,9 @@ describe('routineTotalSec — suma real de pasos expandidos', () => {
     });
   }
 
-  it('las continuas C1/C3/B1 cuadran con totalMinutes·60', () => {
-    for (const id of ['c1', 'c3', 'b1']) {
-      const r = byId(id);
-      expect(routineTotalSec(r)).toBe(r.totalMinutes * 60);
+  it('las 6 sesiones cuadran con totalMinutes·60', () => {
+    for (const r of CARDIO_ROUTINES) {
+      expect(r.totalMinutes * 60).toBe(routineTotalSec(r));
     }
   });
 });

@@ -103,7 +103,7 @@ export const CARDIO_ROUTINES: CardioRoutine[] = [
     machine: 'cinta',
     name: 'C2 · HIIT intervalos',
     type: 'hiit',
-    totalMinutes: 28,
+    totalMinutes: 26,
     description:
       'Intervalos cortos y duros con recuperación: quema mucho en poco tiempo y eleva el gasto tras la sesión.',
     elements: [
@@ -153,7 +153,7 @@ export const CARDIO_ROUTINES: CardioRoutine[] = [
     machine: 'bici',
     name: 'B2 · HIIT intervalos',
     type: 'hiit',
-    totalMinutes: 30,
+    totalMinutes: 34,
     description:
       'Intervalos de 2 min fuertes y 2 min suaves: gran gasto calórico con bajo impacto articular.',
     elements: [
@@ -174,7 +174,7 @@ export const CARDIO_ROUTINES: CardioRoutine[] = [
     machine: 'bici',
     name: 'B3 · Pirámide',
     type: 'variable',
-    totalMinutes: 35,
+    totalMinutes: 28,
     description:
       'Sube la resistencia escalón a escalón y bájala igual, pedaleando constante.',
     elements: [
@@ -192,3 +192,10 @@ export const CARDIO_ROUTINES: CardioRoutine[] = [
     ],
   },
 ];
+
+// `totalMinutes` es un valor DERIVADO de la suma real de los pasos, no una
+// cifra escrita a mano: así el badge de la UI nunca puede desincronizarse de
+// los pasos. Todas las sumas son múltiplos exactos de 60.
+for (const r of CARDIO_ROUTINES) {
+  r.totalMinutes = routineTotalSec(r) / 60;
+}
