@@ -7,14 +7,26 @@ import {
   Bar,
   BarChart,
   CartesianGrid,
+  Line,
+  LineChart,
   ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis,
 } from 'recharts';
+import {
+  formatMmSs,
+  formatPace,
+  formatSpeed,
+} from '../../domain/cardio';
 import { getAllCardioSessions, type CardioSession } from '../../storage';
 import RangeSelector from './RangeSelector';
-import { selectCardioStats, type StatsRange } from './statsSelectors';
+import {
+  selectCardioProgress,
+  selectCardioRecords,
+  selectCardioStats,
+  type StatsRange,
+} from './statsSelectors';
 import styles from './tabs.module.css';
 
 export default function CardioTab() {
@@ -33,12 +45,38 @@ export default function CardioTab() {
   }, []);
 
   const stats = useMemo(() => selectCardioStats(sessions, range), [sessions, range]);
+  const correrProgress = useMemo(
+    () => selectCardioProgress(sessions, 'correr', range),
+    [sessions, range],
+  );
+  const biciProgress = useMemo(
+    () => selectCardioProgress(sessions, 'bici', range),
+    [sessions, range],
+  );
+  const correrRecords = useMemo(
+    () => selectCardioRecords(sessions, 'correr', range),
+    [sessions, range],
+  );
+  const biciRecords = useMemo(
+    () => selectCardioRecords(sessions, 'bici', range),
+    [sessions, range],
+  );
 
   const hasData = stats.sessions > 0;
 
   const weekData = stats.perWeek.map((w) => ({
     label: w.weekStart,
     km: Math.round(w.km * 10) / 10,
+  }));
+
+  // value = seg/km → se grafica numérico y el eje/tooltip se formatea a mm:ss.
+  const paceData = correrProgress.paceSeries.map((p) => ({
+    label: p.date,
+    pace: Math.round(p.value),
+  }));
+  const speedData = biciProgress.speedSeries.map((p) => ({
+    label: p.date,
+    speed: Math.round(p.value * 10) / 10,
   }));
 
   return (
@@ -110,6 +148,156 @@ export default function CardioTab() {
               </ResponsiveContainer>
             </div>
           </section>
+
+          {stats.byType.correr.sessions > 0 && (
+            <section className={styles.card}>
+              <h3 className={styles.cardTitle}>Records 🏃 Correr</h3>
+              <div className={styles.list}>
+                <div className={styles.row}>
+                  <span className={styles.rowName}>Mejor ritmo</span>
+                  <span className={styles.rowMeta}>
+                    {formatPace(correrRecords.bestPaceSecPerKm)}
+                    {correrRecords.lastPaceIsPR ? ' · ¡Récord!' : ''}
+                  </span>
+                </div>
+                <div className={styles.row}>
+                  <span className={styles.rowName}>Distancia más larga</span>
+                  <span className={styles.rowMeta}>
+                    {correrRecords.longestDistanceKm !== null
+                      ? `${Math.round(correrRecords.longestDistanceKm * 10) / 10} km`
+                      : '—'}
+                  </span>
+                </div>
+                <div className={styles.row}>
+                  <span className={styles.rowName}>Sesión más larga</span>
+                  <span className={styles.rowMeta}>
+                    {correrRecords.longestDurationSec !== null
+                      ? formatMmSs(correrRecords.longestDurationSec)
+                      : '—'}
+                  </span>
+                </div>
+              </div>
+            </section>
+          )}
+
+          {paceData.length > 0 && (
+            <section className={styles.card}>
+              <h3 className={styles.cardTitle}>
+                Ritmo correr (min/km) — más bajo es mejor
+              </h3>
+              <div className={styles.chartBody}>
+                <ResponsiveContainer width="100%" height={200}>
+                  <LineChart
+                    data={paceData}
+                    margin={{ top: 8, right: 12, bottom: 4, left: -8 }}
+                  >
+                    <CartesianGrid stroke="#2c3845" strokeDasharray="3 3" />
+                    <XAxis
+                      dataKey="label"
+                      stroke="#6c7d8d"
+                      fontSize={11}
+                      tickMargin={6}
+                    />
+                    <YAxis
+                      stroke="#6c7d8d"
+                      fontSize={11}
+                      tickFormatter={(v: number) => formatMmSs(v)}
+                    />
+                    <Tooltip
+                      contentStyle={{
+                        background: '#141b23',
+                        border: '1px solid #2c3845',
+                        borderRadius: 12,
+                        color: '#eef3f8',
+                      }}
+                      formatter={(v: number) => [`${formatMmSs(v)} min/km`, 'Ritmo']}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="pace"
+                      name="Ritmo (min/km)"
+                      stroke="#28e0a8"
+                      strokeWidth={2}
+                      dot={{ r: 3 }}
+                      isAnimationActive={false}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </section>
+          )}
+
+          {stats.byType.bici.sessions > 0 && (
+            <section className={styles.card}>
+              <h3 className={styles.cardTitle}>Records 🚴 Bici</h3>
+              <div className={styles.list}>
+                <div className={styles.row}>
+                  <span className={styles.rowName}>Mejor velocidad</span>
+                  <span className={styles.rowMeta}>
+                    {formatSpeed(biciRecords.bestSpeedKmH)}
+                    {biciRecords.lastSpeedIsPR ? ' · ¡Récord!' : ''}
+                  </span>
+                </div>
+                <div className={styles.row}>
+                  <span className={styles.rowName}>Distancia más larga</span>
+                  <span className={styles.rowMeta}>
+                    {biciRecords.longestDistanceKm !== null
+                      ? `${Math.round(biciRecords.longestDistanceKm * 10) / 10} km`
+                      : '—'}
+                  </span>
+                </div>
+                <div className={styles.row}>
+                  <span className={styles.rowName}>Sesión más larga</span>
+                  <span className={styles.rowMeta}>
+                    {biciRecords.longestDurationSec !== null
+                      ? formatMmSs(biciRecords.longestDurationSec)
+                      : '—'}
+                  </span>
+                </div>
+              </div>
+            </section>
+          )}
+
+          {speedData.length > 0 && (
+            <section className={styles.card}>
+              <h3 className={styles.cardTitle}>Velocidad bici (km/h)</h3>
+              <div className={styles.chartBody}>
+                <ResponsiveContainer width="100%" height={200}>
+                  <LineChart
+                    data={speedData}
+                    margin={{ top: 8, right: 12, bottom: 4, left: -8 }}
+                  >
+                    <CartesianGrid stroke="#2c3845" strokeDasharray="3 3" />
+                    <XAxis
+                      dataKey="label"
+                      stroke="#6c7d8d"
+                      fontSize={11}
+                      tickMargin={6}
+                    />
+                    <YAxis stroke="#6c7d8d" fontSize={11} />
+                    <Tooltip
+                      contentStyle={{
+                        background: '#141b23',
+                        border: '1px solid #2c3845',
+                        borderRadius: 12,
+                        color: '#eef3f8',
+                      }}
+                      formatter={(v: number) => [`${v.toFixed(1)} km/h`, 'Velocidad']}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="speed"
+                      name="Velocidad (km/h)"
+                      stroke="#4aa3ff"
+                      strokeWidth={2}
+                      dot={{ r: 3 }}
+                      isAnimationActive={false}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </section>
+          )}
 
           <section className={styles.card}>
             <h3 className={styles.cardTitle}>Desglose por tipo</h3>

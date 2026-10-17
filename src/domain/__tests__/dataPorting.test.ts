@@ -42,6 +42,56 @@ describe('round-trip buildBackup → serialize → parse', () => {
   });
 });
 
+describe('round-trip con el nuevo campo durationSec', () => {
+  it('una sesión nueva con durationSec sobrevive idéntica (schemaVersion 1)', () => {
+    const newCardio: CardioSession[] = [
+      {
+        id: 7,
+        date: '2024-06-13T07:00:00.000Z',
+        type: 'correr',
+        durationMin: 29, // round(1710/60)
+        durationSec: 1710,
+        distanceKm: 6.2,
+      },
+    ];
+    const backup = buildBackup({ ...data, cardio: newCardio }, NOW);
+    const result = parseBackup(serializeBackup(backup));
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.backup.schemaVersion).toBe(1);
+      expect(result.backup.cardio).toEqual(newCardio);
+      expect(result.backup.cardio[0].durationSec).toBe(1710);
+    }
+  });
+
+  it('un archivo antiguo sin durationSec (solo durationMin) importa bien', () => {
+    const legacy = {
+      schemaVersion: 1,
+      exportedAt: NOW.toISOString(),
+      profiles: [],
+      sets: [],
+      cardio: [
+        {
+          id: 1,
+          date: '2024-05-01T07:00:00.000Z',
+          type: 'bici',
+          durationMin: 45,
+          distanceKm: 18,
+        },
+      ],
+      settings,
+    };
+    const result = parseBackup(JSON.stringify(legacy));
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      const session = result.backup.cardio[0];
+      // Conserva durationMin y NO inventa durationSec en el parseo.
+      expect(session.durationMin).toBe(45);
+      expect(session.durationSec).toBeUndefined();
+    }
+  });
+});
+
 describe('parseBackup rechaza entradas inválidas sin lanzar', () => {
   it('JSON malformado', () => {
     const r = parseBackup('{ no es json');

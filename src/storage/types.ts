@@ -36,7 +36,13 @@ export interface CardioSession {
   id: number; // autoincrement
   date: string; // ISO 8601
   type: 'correr' | 'bici';
-  durationMin: number; // duración en minutos
+  durationMin: number; // duración en minutos (se conserva por compatibilidad)
+  /**
+   * Duración en segundos. Opcional por compatibilidad hacia atrás: los datos
+   * antiguos solo tienen `durationMin`. Al computar se prefiere `durationSec`
+   * cuando está presente (ver `sessionDurationSec` en domain/cardio).
+   */
+  durationSec?: number;
   distanceKm: number; // distancia en km
   calories?: number; // calorías estimadas (opcional)
   notes?: string; // notas libres (opcional)

@@ -44,6 +44,70 @@
   gap: var(--kiro-space-3);
 }
 
+.timeRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--kiro-space-3);
+}
+
+.dateField {
+  display: flex;
+  flex-direction: column;
+  gap: var(--kiro-space-1);
+  font-size: var(--kiro-font-size-sm);
+  color: var(--kiro-text-muted);
+}
+
+.date {
+  padding: var(--kiro-space-2);
+  border-radius: var(--kiro-radius-sm);
+  background: var(--kiro-surface-2);
+  border: 1px solid var(--kiro-border);
+  color: var(--kiro-text);
+  font-size: var(--kiro-font-size-md);
+  font-family: inherit;
+}
+
+.records {
+  display: flex;
+  flex-direction: column;
+  gap: var(--kiro-space-3);
+}
+
+.recordsGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--kiro-space-2);
+}
+
+.record {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  background: var(--kiro-surface);
+  border: 1px solid var(--kiro-border);
+  border-radius: var(--kiro-radius-md);
+  padding: var(--kiro-space-3);
+}
+
+.recordLabel {
+  font-size: var(--kiro-font-size-xs);
+  color: var(--kiro-text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.recordValue {
+  font-size: var(--kiro-font-size-md);
+  font-weight: 700;
+}
+
+.pr {
+  color: var(--kiro-accent);
+  font-size: var(--kiro-font-size-xs);
+  font-weight: 700;
+}
+
 .notesField {
   display: flex;
   flex-direction: column;

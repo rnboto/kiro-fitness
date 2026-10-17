@@ -2,8 +2,20 @@
 // Formulario para registrar una sesión (correr/bici) y lista de sesiones
 // recientes con borrado. Persiste en cardioStore.
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import NumberStepper from '../../components/NumberStepper';
+import {
+  formatMmSs,
+  formatPace,
+  formatSpeed,
+  paceSecPerKm,
+  sessionDurationSec,
+  speedKmH,
+} from '../../domain/cardio';
+import {
+  selectCardioRecords,
+  type CardioRecords,
+} from '../estadisticas/statsSelectors';
 import {
   addCardioSession,
   deleteCardioSession,
@@ -19,12 +31,44 @@ const TYPE_LABEL: Record<CardioType, string> = {
   bici: 'Bici',
 };
 
+/** 'YYYY-MM-DD' de hoy en zona local (para el input date por defecto). */
+function todayKey(): string {
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
+/**
+ * Construye un ISO a partir de 'YYYY-MM-DD' fijando el mediodía local, para
+ * evitar que al truncar a 'YYYY-MM-DD' el valor caiga en el día anterior por
+ * la zona horaria.
+ */
+function dateKeyToIso(key: string): string {
+  const [y, m, d] = key.split('-').map(Number);
+  const local = new Date(y, (m ?? 1) - 1, d ?? 1, 12, 0, 0, 0);
+  return local.toISOString();
+}
+
+/** Línea computada de una sesión: distancia · tiempo · ritmo o velocidad. */
+function sessionComputedLine(s: CardioSession): string {
+  const dur = sessionDurationSec(s);
+  const perf =
+    s.type === 'correr'
+      ? formatPace(paceSecPerKm(dur, s.distanceKm))
+      : formatSpeed(speedKmH(dur, s.distanceKm));
+  return `${s.distanceKm} km · ${formatMmSs(dur)} · ${perf}`;
+}
+
 export default function CardioView() {
   const [type, setType] = useState<CardioType>('correr');
-  const [durationMin, setDurationMin] = useState(30);
+  const [minutes, setMinutes] = useState(30);
+  const [seconds, setSeconds] = useState(0);
   const [distanceKm, setDistanceKm] = useState(5);
   const [calories, setCalories] = useState(0);
   const [notes, setNotes] = useState('');
+  const [date, setDate] = useState(todayKey());
   const [saving, setSaving] = useState(false);
   const [sessions, setSessions] = useState<CardioSession[]>([]);
 
@@ -39,12 +83,14 @@ export default function CardioView() {
   }, [refresh]);
 
   const confirm = useCallback(async () => {
+    const durationSec = minutes * 60 + seconds;
     setSaving(true);
     try {
       await addCardioSession({
-        date: new Date().toISOString(),
+        date: dateKeyToIso(date),
         type,
-        durationMin,
+        durationSec,
+        durationMin: Math.round(durationSec / 60),
         distanceKm,
         ...(calories > 0 ? { calories } : {}),
         ...(notes.trim() !== '' ? { notes: notes.trim() } : {}),
@@ -54,7 +100,7 @@ export default function CardioView() {
     } finally {
       setSaving(false);
     }
-  }, [type, durationMin, distanceKm, calories, notes, refresh]);
+  }, [type, minutes, seconds, distanceKm, calories, notes, date, refresh]);
 
   const remove = useCallback(
     async (id: number) => {
@@ -63,6 +109,14 @@ export default function CardioView() {
     },
     [refresh],
   );
+
+  // Records globales ('todo') del tipo activo, para el panel de marcas.
+  const records: CardioRecords = useMemo(
+    () => selectCardioRecords(sessions, type, 'todo'),
+    [sessions, type],
+  );
+  const hasRecords =
+    records.longestDistanceKm !== null || records.longestDurationSec !== null;
 
   return (
     <div className={styles.cardio}>
@@ -85,16 +139,28 @@ export default function CardioView() {
         </div>
 
         <div className={styles.steppers}>
-          <NumberStepper
-            label="Duración"
-            unit="min"
-            value={durationMin}
-            onChange={setDurationMin}
-            min={0}
-            max={600}
-            step={1}
-            id="cardio-duration"
-          />
+          <div className={styles.timeRow} role="group" aria-label="Duración">
+            <NumberStepper
+              label="Minutos"
+              unit="min"
+              value={minutes}
+              onChange={setMinutes}
+              min={0}
+              max={600}
+              step={1}
+              id="cardio-minutes"
+            />
+            <NumberStepper
+              label="Segundos"
+              unit="s"
+              value={seconds}
+              onChange={setSeconds}
+              min={0}
+              max={59}
+              step={5}
+              id="cardio-seconds"
+            />
+          </div>
           <NumberStepper
             label="Distancia"
             unit="km"
@@ -118,6 +184,18 @@ export default function CardioView() {
           />
         </div>
 
+        <label className={styles.dateField} htmlFor="cardio-date">
+          <span>Fecha</span>
+          <input
+            id="cardio-date"
+            className={styles.date}
+            type="date"
+            value={date}
+            max={todayKey()}
+            onChange={(e) => setDate(e.target.value)}
+          />
+        </label>
+
         <label className={styles.notesField} htmlFor="cardio-notes">
           <span>Notas (opcional)</span>
           <textarea
@@ -140,6 +218,53 @@ export default function CardioView() {
         </button>
       </section>
 
+      {hasRecords && (
+        <section className={styles.records}>
+          <h2 className={styles.formTitle}>
+            Records {type === 'correr' ? '🏃 Correr' : '🚴 Bici'}
+          </h2>
+          <div className={styles.recordsGrid}>
+            {type === 'correr' ? (
+              <div className={styles.record}>
+                <span className={styles.recordLabel}>Mejor ritmo</span>
+                <span className={styles.recordValue}>
+                  {formatPace(records.bestPaceSecPerKm)}
+                  {records.lastPaceIsPR && (
+                    <span className={styles.pr}> ¡Récord!</span>
+                  )}
+                </span>
+              </div>
+            ) : (
+              <div className={styles.record}>
+                <span className={styles.recordLabel}>Mejor velocidad</span>
+                <span className={styles.recordValue}>
+                  {formatSpeed(records.bestSpeedKmH)}
+                  {records.lastSpeedIsPR && (
+                    <span className={styles.pr}> ¡Récord!</span>
+                  )}
+                </span>
+              </div>
+            )}
+            <div className={styles.record}>
+              <span className={styles.recordLabel}>Distancia más larga</span>
+              <span className={styles.recordValue}>
+                {records.longestDistanceKm !== null
+                  ? `${Math.round(records.longestDistanceKm * 10) / 10} km`
+                  : '—'}
+              </span>
+            </div>
+            <div className={styles.record}>
+              <span className={styles.recordLabel}>Sesión más larga</span>
+              <span className={styles.recordValue}>
+                {records.longestDurationSec !== null
+                  ? formatMmSs(records.longestDurationSec)
+                  : '—'}
+              </span>
+            </div>
+          </div>
+        </section>
+      )}
+
       <section className={styles.history}>
         <h2 className={styles.formTitle}>Sesiones recientes</h2>
         {sessions.length === 0 ? (
@@ -157,7 +282,7 @@ export default function CardioView() {
                   <span className={styles.itemDate}>{s.date.slice(0, 10)}</span>
                 </div>
                 <div className={styles.itemMeta}>
-                  {s.distanceKm} km · {s.durationMin} min
+                  {sessionComputedLine(s)}
                   {s.calories !== undefined ? ` · ${s.calories} kcal` : ''}
                   {s.notes ? ` · ${s.notes}` : ''}
                 </div>

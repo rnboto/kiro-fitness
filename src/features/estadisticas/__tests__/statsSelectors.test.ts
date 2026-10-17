@@ -8,6 +8,8 @@ import {
   rangeStart,
   selectAdherenceStats,
   selectBodyStats,
+  selectCardioProgress,
+  selectCardioRecords,
   selectCardioStats,
   selectNutritionSummary,
   selectStrengthStats,
@@ -251,5 +253,147 @@ describe('selectAdherenceStats', () => {
     expect(stats.cardioDays).toBe(2); // cardio: 06-10 y 06-12
     // Unión de {06-10, 06-14} ∪ {06-10, 06-12} = {06-10, 06-12, 06-14} = 3.
     expect(stats.trainingDays).toBe(3);
+  });
+});
+
+describe('selectCardioRecords', () => {
+  const sessions: CardioSession[] = [
+    // Correr: tres sesiones; la segunda es la más rápida (menor ritmo).
+    cardio('2024-06-10T07:00:00.000Z', {
+      type: 'correr',
+      durationSec: 1800,
+      durationMin: 30,
+      distanceKm: 5,
+    }), // 360 s/km
+    cardio('2024-06-12T07:00:00.000Z', {
+      type: 'correr',
+      durationSec: 1500,
+      durationMin: 25,
+      distanceKm: 5,
+    }), // 300 s/km (más rápido)
+    cardio('2024-06-14T07:00:00.000Z', {
+      type: 'correr',
+      durationSec: 1680,
+      durationMin: 28,
+      distanceKm: 6,
+    }), // 280 s/km (aún más rápido, es la última)
+    // Bici: no debe contaminar los records de correr.
+    cardio('2024-06-13T07:00:00.000Z', {
+      type: 'bici',
+      durationSec: 3600,
+      durationMin: 60,
+      distanceKm: 25,
+    }),
+  ];
+
+  it('detecta el mejor (menor) ritmo y la distancia más larga en correr', () => {
+    const r = selectCardioRecords(sessions, 'correr', 'todo', NOW);
+    expect(r.bestPaceSecPerKm).toBeCloseTo(280, 5); // 1680/6
+    expect(r.longestDistanceKm).toBe(6);
+    expect(r.longestDurationSec).toBe(1800);
+    // Solo entran sesiones de correr: la mejor velocidad se calcula sobre
+    // esas mismas sesiones (la bici no contamina). 1680 s para 6 km ⇒ ~12.86 km/h.
+    expect(r.bestSpeedKmH).toBeCloseTo((6 / 1680) * 3600, 5);
+  });
+
+  it('lastPaceIsPR true cuando la última sesión del rango es la más rápida', () => {
+    const r = selectCardioRecords(sessions, 'correr', 'todo', NOW);
+    // La última (06-14, 280 s/km) es la más rápida ⇒ PR.
+    expect(r.lastPaceIsPR).toBe(true);
+  });
+
+  it('lastPaceIsPR false cuando la última no mejora el mejor ritmo', () => {
+    const withSlowLast: CardioSession[] = [
+      ...sessions,
+      cardio('2024-06-15T07:00:00.000Z', {
+        type: 'correr',
+        durationSec: 2000,
+        durationMin: 33,
+        distanceKm: 5,
+      }), // 400 s/km, lento
+    ];
+    const r = selectCardioRecords(withSlowLast, 'correr', 'todo', NOW);
+    expect(r.lastPaceIsPR).toBe(false);
+  });
+
+  it('calcula la mejor velocidad en bici sin mezclarse con correr', () => {
+    const r = selectCardioRecords(sessions, 'bici', 'todo', NOW);
+    expect(r.bestSpeedKmH).toBeCloseTo(25, 5); // 25 km en 3600 s
+    expect(r.bestPaceSecPerKm).toBeCloseTo(144, 5); // 3600/25
+    expect(r.longestDistanceKm).toBe(25);
+  });
+
+  it('ignora sesiones con distancia <= 0 para ritmo/velocidad', () => {
+    const bad: CardioSession[] = [
+      cardio('2024-06-11T07:00:00.000Z', {
+        type: 'correr',
+        durationSec: 1200,
+        durationMin: 20,
+        distanceKm: 0,
+      }),
+    ];
+    const r = selectCardioRecords(bad, 'correr', 'todo', NOW);
+    expect(r.bestPaceSecPerKm).toBeNull();
+    // La duración/distancia siguen contando como "más larga" aunque km sea 0.
+    expect(r.longestDistanceKm).toBe(0);
+    expect(r.longestDurationSec).toBe(1200);
+  });
+
+  it('deriva la duración de datos antiguos (solo durationMin)', () => {
+    const legacy: CardioSession[] = [
+      cardio('2024-06-10T07:00:00.000Z', {
+        type: 'correr',
+        durationMin: 30,
+        distanceKm: 6,
+        durationSec: undefined,
+      }),
+    ];
+    const r = selectCardioRecords(legacy, 'correr', 'todo', NOW);
+    // 30 min → 1800 s; ritmo 1800/6 = 300 s/km.
+    expect(r.longestDurationSec).toBe(1800);
+    expect(r.bestPaceSecPerKm).toBeCloseTo(300, 5);
+  });
+});
+
+describe('selectCardioProgress', () => {
+  const sessions: CardioSession[] = [
+    cardio('2024-06-14T07:00:00.000Z', {
+      type: 'correr',
+      durationSec: 1680,
+      durationMin: 28,
+      distanceKm: 6,
+    }),
+    cardio('2024-06-10T07:00:00.000Z', {
+      type: 'correr',
+      durationSec: 1800,
+      durationMin: 30,
+      distanceKm: 5,
+    }),
+    cardio('2024-06-12T07:00:00.000Z', {
+      type: 'bici',
+      durationSec: 3600,
+      durationMin: 60,
+      distanceKm: 25,
+    }),
+    // Distancia 0 ⇒ no entra en la serie.
+    cardio('2024-06-11T07:00:00.000Z', {
+      type: 'correr',
+      durationSec: 1200,
+      durationMin: 20,
+      distanceKm: 0,
+    }),
+  ];
+
+  it('ordena por fecha ascendente y mapea pace a seg/km', () => {
+    const p = selectCardioProgress(sessions, 'correr', 'todo', NOW);
+    expect(p.paceSeries.map((s) => s.date)).toEqual(['2024-06-10', '2024-06-14']);
+    expect(p.paceSeries[0].value).toBeCloseTo(360, 5); // 1800/5
+    expect(p.paceSeries[1].value).toBeCloseTo(280, 5); // 1680/6
+  });
+
+  it('mapea la serie de velocidad de bici a km/h', () => {
+    const p = selectCardioProgress(sessions, 'bici', 'todo', NOW);
+    expect(p.speedSeries).toHaveLength(1);
+    expect(p.speedSeries[0].value).toBeCloseTo(25, 5);
   });
 });

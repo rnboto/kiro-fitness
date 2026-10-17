@@ -8,6 +8,7 @@ import {
   type DailyPlan,
   type NutritionInput,
 } from '../../domain/nutrition';
+import { paceSecPerKm, sessionDurationSec, speedKmH } from '../../domain/cardio';
 import { routine } from '../../domain/routine';
 
 /** Rango temporal del selector Semana/Mes/Todo. */
@@ -285,16 +286,19 @@ export function selectCardioStats(
   const byWeek = new Map<string, WeeklyCardio>();
 
   for (const s of filtered) {
+    // Prefiere la duración en segundos (datos nuevos) y la expresa en minutos;
+    // para datos antiguos (solo durationMin) el resultado es idéntico.
+    const min = sessionDurationSec(s) / 60;
     totalKm += s.distanceKm;
-    totalMin += s.durationMin;
+    totalMin += min;
     byType[s.type].km += s.distanceKm;
-    byType[s.type].min += s.durationMin;
+    byType[s.type].min += min;
     byType[s.type].sessions += 1;
 
     const wk = weekStartKey(s.date);
     const acc = byWeek.get(wk) ?? { weekStart: wk, km: 0, min: 0 };
     acc.km += s.distanceKm;
-    acc.min += s.durationMin;
+    acc.min += min;
     byWeek.set(wk, acc);
   }
 
@@ -309,6 +313,128 @@ export function selectCardioStats(
     perWeek,
     byType,
   };
+}
+
+/** Records (marcas personales) de cardio para un tipo (correr/bici). */
+export interface CardioRecords {
+  bestPaceSecPerKm: number | null; // mejor (menor) ritmo, solo correr
+  longestDistanceKm: number | null; // distancia más larga
+  longestDurationSec: number | null; // sesión más larga (en segundos)
+  bestSpeedKmH: number | null; // mejor (mayor) velocidad, solo bici
+  lastPaceIsPR: boolean; // la sesión más reciente del rango marcó mejor ritmo
+  lastSpeedIsPR: boolean; // la sesión más reciente del rango marcó mejor velocidad
+}
+
+/** Series de progreso de cardio para graficar (ritmo correr / velocidad bici). */
+export interface CardioProgress {
+  paceSeries: SeriesPoint[]; // value = segundos/km (correr)
+  speedSeries: SeriesPoint[]; // value = km/h (bici)
+}
+
+/** Sesiones de un tipo dentro del rango, ordenadas por fecha ascendente. */
+function cardioOfType(
+  sessions: CardioSession[],
+  type: 'correr' | 'bici',
+  range: StatsRange,
+  now: Date,
+): CardioSession[] {
+  const start = rangeStart(range, now);
+  return sessions
+    .filter((s) => s.type === type && inRange(s.date, start, now))
+    .slice()
+    .sort((a, b) => {
+      const byDate = toDayKey(a.date).localeCompare(toDayKey(b.date));
+      return byDate !== 0 ? byDate : a.id - b.id;
+    });
+}
+
+/**
+ * Records de cardio por tipo (correr/bici), filtrados por rango. Para correr se
+ * reporta el mejor (menor) ritmo; para bici la mejor velocidad. Ignora las
+ * sesiones con `distanceKm <= 0` al calcular ritmo/velocidad. Marca si la
+ * sesión más reciente del rango igualó o superó la mejor marca (PR).
+ */
+export function selectCardioRecords(
+  sessions: CardioSession[],
+  type: 'correr' | 'bici',
+  range: StatsRange,
+  now: Date = new Date(),
+): CardioRecords {
+  const filtered = cardioOfType(sessions, type, range, now);
+
+  let bestPaceSecPerKm: number | null = null;
+  let longestDistanceKm: number | null = null;
+  let longestDurationSec: number | null = null;
+  let bestSpeedKmH: number | null = null;
+
+  for (const s of filtered) {
+    const dur = sessionDurationSec(s);
+    if (longestDistanceKm === null || s.distanceKm > longestDistanceKm) {
+      longestDistanceKm = s.distanceKm;
+    }
+    if (longestDurationSec === null || dur > longestDurationSec) {
+      longestDurationSec = dur;
+    }
+    const pace = paceSecPerKm(dur, s.distanceKm);
+    if (pace !== null && (bestPaceSecPerKm === null || pace < bestPaceSecPerKm)) {
+      bestPaceSecPerKm = pace;
+    }
+    const speed = speedKmH(dur, s.distanceKm);
+    if (speed !== null && (bestSpeedKmH === null || speed > bestSpeedKmH)) {
+      bestSpeedKmH = speed;
+    }
+  }
+
+  // ¿La sesión más reciente del rango marcó un récord?
+  let lastPaceIsPR = false;
+  let lastSpeedIsPR = false;
+  const last = filtered[filtered.length - 1];
+  if (last) {
+    const dur = sessionDurationSec(last);
+    const pace = paceSecPerKm(dur, last.distanceKm);
+    if (pace !== null && bestPaceSecPerKm !== null && pace <= bestPaceSecPerKm) {
+      lastPaceIsPR = true;
+    }
+    const speed = speedKmH(dur, last.distanceKm);
+    if (speed !== null && bestSpeedKmH !== null && speed >= bestSpeedKmH) {
+      lastSpeedIsPR = true;
+    }
+  }
+
+  return {
+    bestPaceSecPerKm,
+    longestDistanceKm,
+    longestDurationSec,
+    bestSpeedKmH,
+    lastPaceIsPR,
+    lastSpeedIsPR,
+  };
+}
+
+/**
+ * Series de progreso de cardio por tipo, ordenadas por fecha ascendente:
+ * ritmo (seg/km) para correr y velocidad (km/h) para bici. Las sesiones con
+ * `distanceKm <= 0` (ritmo/velocidad indefinidos) se omiten de la serie.
+ */
+export function selectCardioProgress(
+  sessions: CardioSession[],
+  type: 'correr' | 'bici',
+  range: StatsRange,
+  now: Date = new Date(),
+): CardioProgress {
+  const filtered = cardioOfType(sessions, type, range, now);
+
+  const paceSeries: SeriesPoint[] = [];
+  const speedSeries: SeriesPoint[] = [];
+  for (const s of filtered) {
+    const dur = sessionDurationSec(s);
+    const pace = paceSecPerKm(dur, s.distanceKm);
+    if (pace !== null) paceSeries.push({ date: toDayKey(s.date), value: pace });
+    const speed = speedKmH(dur, s.distanceKm);
+    if (speed !== null) speedSeries.push({ date: toDayKey(s.date), value: speed });
+  }
+
+  return { paceSeries, speedSeries };
 }
 
 /**
