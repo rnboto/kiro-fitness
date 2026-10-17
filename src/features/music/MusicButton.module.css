@@ -1,0 +1,15 @@
+.button {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--kiro-space-2);
+  padding: var(--kiro-space-3) var(--kiro-space-5);
+  border-radius: var(--kiro-radius-pill);
+  background: var(--kiro-accent);
+  color: #06241b;
+  font-weight: 700;
+  font-size: var(--kiro-font-size-md);
+}
+
+.button:hover {
+  background: var(--kiro-accent-strong);
+}

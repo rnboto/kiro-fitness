@@ -6,6 +6,7 @@
 import { useProfile } from '../../context/ProfileContext';
 import { useAttendanceCalendar } from '../../domain/useAttendanceCalendar';
 import AttendanceCalendar from '../estadisticas/AttendanceCalendar';
+import MusicButton from '../music/MusicButton';
 import styles from './PerfilScreen.module.css';
 
 export default function PerfilScreen() {
@@ -42,6 +43,14 @@ export default function PerfilScreen() {
             <span className={styles.metricValue}>{streak}</span>
           </div>
         </div>
+      </section>
+
+      <section className={styles.card}>
+        <h2 className={styles.cardTitle}>Música</h2>
+        <p className={styles.calHelper}>
+          Abre Amazon Music para escuchar mientras entrenas.
+        </p>
+        <MusicButton />
       </section>
 
       <header className={styles.header}>

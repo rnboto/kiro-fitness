@@ -16,6 +16,7 @@ import EstadisticasScreen from './features/estadisticas/EstadisticasScreen';
 import NotificacionesScreen from './features/notificaciones/NotificacionesScreen';
 import SettingsPanel from './features/ajustes/SettingsPanel';
 import TimerFab from './features/timer/TimerFab';
+import MusicFab from './features/music/MusicFab';
 import styles from './App.module.css';
 
 function AppContent() {
@@ -79,6 +80,9 @@ function AppContent() {
       {/* FAB global del cronómetro/temporizador (feature B): accesible desde
           cualquier pantalla. Independiente del RestTimer/SessionClock. */}
       <TimerFab />
+      {/* FAB global de Música: lanza Amazon Music desde cualquier pantalla,
+          apilado encima del FAB del cronómetro para no solaparse. */}
+      <MusicFab />
       <TabBar active={tab} onChange={setTab} />
 
       <Modal open={settingsOpen} title="Ajustes" onClose={() => setSettingsOpen(false)}>

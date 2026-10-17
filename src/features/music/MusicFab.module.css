@@ -1,0 +1,25 @@
+/* Mismo patrón que TimerFab.module.css, pero apilado DIRECTAMENTE ENCIMA del FAB
+   del cronómetro (56px + un hueco) para que no se solapen. */
+.fab {
+  position: fixed;
+  right: var(--kiro-space-4);
+  bottom: calc(
+    var(--kiro-tabbar-height) + env(safe-area-inset-bottom) + var(--kiro-space-4) + 56px +
+      var(--kiro-space-3)
+  );
+  width: 56px;
+  height: 56px;
+  border-radius: var(--kiro-radius-pill);
+  background: var(--kiro-accent);
+  color: #06241b;
+  font-size: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--kiro-shadow-2);
+  z-index: 40;
+}
+
+.fab:hover {
+  background: var(--kiro-accent-strong);
+}
