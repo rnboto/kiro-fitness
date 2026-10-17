@@ -24,11 +24,14 @@
 
 .silhouette {
   fill: var(--kiro-surface-3);
+  opacity: 0.35;
 }
 
 .region {
   fill: var(--kiro-surface-3);
-  opacity: 0.45;
+  opacity: 0.6;
+  stroke: var(--kiro-border);
+  stroke-width: 0.75;
   transition: fill 0.2s ease, opacity 0.2s ease;
 }
 
