@@ -1,8 +1,12 @@
 // Tipos del esquema de persistencia (design §5).
 // Única fuente de verdad para las entidades almacenadas y los defaults de siembra.
 
-/** Días de la rutina Torso/Pierna (design §8.1). */
-export type DayId = 'torsoA' | 'piernaA' | 'torsoB' | 'piernaB';
+/**
+ * Id de día de rutina. Ahora los ids llevan prefijo de fase (p.ej. 's1-d1',
+ * 's2-d3'), por lo que el tipo se amplía a `string` para admitir ambas fases
+ * sin migrar el histórico persistido (los antiguos 'torsoA' siguen siendo string válido).
+ */
+export type DayId = string;
 
 /** Entrada de histórico del perfil (estudio Evolt/bioimpedancia). */
 export interface ProfileEntry {
@@ -57,6 +61,7 @@ export interface Settings {
   bmrBasis: 'lbm' | 'mme'; // default 'lbm'; base de Katch-McArdle (design §6.1)
   trainingStart: string; // 'HH:mm', default '07:00'
   restSeconds: number; // default 60 (rango 45-60)
+  routineWeekPhase: 'semana1' | 'semana2plus'; // fase de rutina activa (default 'semana1')
   reminders: ReminderSettings;
   /** Overrides de imágenes de ejercicios, por exerciseId (design §8.2). */
   exerciseOverrides: Record<string, { imageUrl?: string; endImageUrl?: string }>;
@@ -76,6 +81,7 @@ export const DEFAULT_SETTINGS: Settings = {
   bmrBasis: 'lbm',
   trainingStart: '07:00',
   restSeconds: 60,
+  routineWeekPhase: 'semana1',
   exerciseOverrides: {},
   reminders: DEFAULT_REMINDERS,
 };

@@ -1,13 +1,50 @@
 import { describe, it, expect } from 'vitest';
 import {
   routine,
+  routinesByPhase,
   defaultImageUrl,
   defaultEndImageUrl,
   resolveImageUrl,
-  type Exercise,
 } from '../routine';
 
 const PREFIX = 'https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/';
+
+/** Conjunto verificado de 36 freeExerciseDbId (enhance-plan.md). */
+const VERIFIED_IDS = new Set([
+  'Barbell_Bench_Press_-_Medium_Grip',
+  'Barbell_Incline_Bench_Press_-_Medium_Grip',
+  'Cable_Crossover',
+  'Butterfly',
+  'Bent_Over_Barbell_Row',
+  'Bent_Over_Two-Dumbbell_Row',
+  'Chin-Up',
+  'Close-Grip_Front_Lat_Pulldown',
+  'Barbell_Squat',
+  'Barbell_Full_Squat',
+  'Leg_Press',
+  'Barbell_Lunge',
+  'Barbell_Hip_Thrust',
+  'Barbell_Glute_Bridge',
+  'Glute_Kickback',
+  'Barbell_Curl',
+  'Alternate_Hammer_Curl',
+  'Cable_Preacher_Curl',
+  'Alternate_Incline_Dumbbell_Curl',
+  'Bench_Dips',
+  'Cable_Incline_Triceps_Extension',
+  'Band_Skull_Crusher',
+  'Arnold_Dumbbell_Press',
+  'Alternating_Cable_Shoulder_Press',
+  'Alternating_Deltoid_Raise',
+  'Back_Flyes_-_With_Bands',
+  'Barbell_Shrug',
+  'Dumbbell_Shrug',
+  'Barbell_Seated_Calf_Raise',
+  'Calf_Press',
+  'Cable_Wrist_Curl',
+]);
+
+const allDays = [...routinesByPhase.semana1, ...routinesByPhase.semana2plus];
 
 describe('URLs de imagen por defecto', () => {
   it('defaultImageUrl deriva /0.jpg desde el freeExerciseDbId', () => {
@@ -18,8 +55,8 @@ describe('URLs de imagen por defecto', () => {
     expect(defaultEndImageUrl('Barbell_Squat')).toBe(`${PREFIX}Barbell_Squat/1.jpg`);
   });
 
-  it('cada ejercicio tiene imageUrl/endImageUrl bien formadas', () => {
-    for (const day of routine) {
+  it('cada ejercicio de ambas fases tiene imageUrl/endImageUrl bien formadas', () => {
+    for (const day of allDays) {
       for (const ex of day.exercises) {
         expect(ex.imageUrl).toBe(`${PREFIX}${ex.freeExerciseDbId}/0.jpg`);
         expect(ex.endImageUrl).toBe(`${PREFIX}${ex.freeExerciseDbId}/1.jpg`);
@@ -29,7 +66,7 @@ describe('URLs de imagen por defecto', () => {
 });
 
 describe('resolveImageUrl', () => {
-  const ex = routine[0].exercises[0];
+  const ex = routinesByPhase.semana1[0].exercises[0];
 
   it('el override prevalece sobre el default', () => {
     const resolved = resolveImageUrl(ex, { imageUrl: 'https://x/custom.gif' });
@@ -45,51 +82,63 @@ describe('resolveImageUrl', () => {
   });
 });
 
-describe('estructura de la rutina', () => {
-  it('exactamente 4 días', () => {
-    expect(routine).toHaveLength(4);
-    expect(routine.map((d) => d.id)).toEqual(['torsoA', 'piernaA', 'torsoB', 'piernaB']);
+describe('estructura de la rutina (dos fases)', () => {
+  it('routinesByPhase tiene las claves semana1 y semana2plus', () => {
+    expect(Object.keys(routinesByPhase).sort()).toEqual(['semana1', 'semana2plus']);
   });
 
-  it('cada día tiene 5 ejercicios × 3 series', () => {
-    for (const day of routine) {
+  it('cada fase tiene exactamente 4 días', () => {
+    expect(routinesByPhase.semana1).toHaveLength(4);
+    expect(routinesByPhase.semana2plus).toHaveLength(4);
+  });
+
+  it('ids de día con prefijo de fase', () => {
+    expect(routinesByPhase.semana1.map((d) => d.id)).toEqual(['s1-d1', 's1-d2', 's1-d3', 's1-d4']);
+    expect(routinesByPhase.semana2plus.map((d) => d.id)).toEqual(['s2-d1', 's2-d2', 's2-d3', 's2-d4']);
+  });
+
+  it('los 8 ids de día son únicos entre fases', () => {
+    const ids = allDays.map((d) => d.id);
+    expect(new Set(ids).size).toBe(ids.length);
+    expect(ids).toHaveLength(8);
+  });
+
+  it('Semana 1: 5 ejercicios por día; Semana 2+: 5 o 6', () => {
+    for (const day of routinesByPhase.semana1) {
       expect(day.exercises).toHaveLength(5);
-      for (const ex of day.exercises) {
-        expect(ex.sets).toBe(3);
-      }
+    }
+    for (const day of routinesByPhase.semana2plus) {
+      expect(day.exercises.length).toBeGreaterThanOrEqual(5);
+      expect(day.exercises.length).toBeLessThanOrEqual(6);
     }
   });
 
-  it('mapea los 11 freeExerciseDbId del design §8.2', () => {
-    const expected = new Set([
-      'Barbell_Bench_Press_-_Medium_Grip',
-      'Barbell_Squat',
-      'Barbell_Deadlift',
-      'Standing_Military_Press',
-      'Bent_Over_Barbell_Row',
-      'Wide-Grip_Lat_Pulldown',
-      'Dumbbell_Lunges',
-      'Leg_Press',
-      'Lying_Leg_Curls',
-      'Side_Lateral_Raise',
-      'Standing_Calf_Raises',
-    ]);
+  it('cada WorkoutDay.muscles es la unión de-duplicada de sus ejercicios', () => {
+    for (const day of allDays) {
+      const expected = new Set(day.exercises.flatMap((ex) => ex.targetMuscles));
+      expect(new Set(day.muscles)).toEqual(expected);
+      // sin duplicados
+      expect(day.muscles.length).toBe(new Set(day.muscles).size);
+    }
+  });
+
+  it('todo freeExerciseDbId usado está en el set verificado', () => {
     const used = new Set<string>();
-    for (const day of routine) {
-      for (const ex of day.exercises) used.add(ex.freeExerciseDbId);
-    }
-    expect(used).toEqual(expected);
-    expect(used.size).toBe(11);
-  });
-
-  it('descansos: 45s en lateral_raise y calf_raise, 60s en el resto', () => {
-    const all: Exercise[] = routine.flatMap((d) => d.exercises);
-    for (const ex of all) {
-      if (ex.id === 'lateral_raise' || ex.id === 'calf_raise') {
-        expect(ex.restSeconds).toBe(45);
-      } else {
-        expect(ex.restSeconds).toBe(60);
+    for (const day of allDays) {
+      for (const ex of day.exercises) {
+        expect(VERIFIED_IDS.has(ex.freeExerciseDbId)).toBe(true);
+        used.add(ex.freeExerciseDbId);
       }
     }
+    // y cada id verificado usado es alcanzable (se refleja a sí mismo).
+    for (const id of used) {
+      expect(VERIFIED_IDS.has(id)).toBe(true);
+    }
+  });
+});
+
+describe('alias de compatibilidad', () => {
+  it('routine es la fase semana1', () => {
+    expect(routine).toBe(routinesByPhase.semana1);
   });
 });

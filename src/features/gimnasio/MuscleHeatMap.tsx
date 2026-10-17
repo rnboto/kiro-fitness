@@ -22,6 +22,8 @@ const MUSCLE_LABEL: Record<MuscleId, string> = {
   glutes: 'Glúteos',
   calves: 'Gemelos',
   abs: 'Abdomen',
+  traps: 'Trapecio',
+  forearms: 'Antebrazos',
 };
 
 export default function MuscleHeatMap({ activeMuscles }: MuscleHeatMapProps) {

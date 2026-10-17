@@ -82,6 +82,10 @@ describe('settingsStore', () => {
     expect(await getSettings()).toEqual(DEFAULT_SETTINGS);
   });
 
+  it("DEFAULT_SETTINGS.routineWeekPhase es 'semana1'", () => {
+    expect(DEFAULT_SETTINGS.routineWeekPhase).toBe('semana1');
+  });
+
   it('saveSettings persiste cambios', async () => {
     const next = { ...DEFAULT_SETTINGS, activityFactor: 1.55 };
     await saveSettings(next);
