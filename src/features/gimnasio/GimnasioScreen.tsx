@@ -1,4 +1,5 @@
-// Pantalla Gimnasio (design §8). Selector de día (torsoA/piernaA/torsoB/piernaB),
+// Pantalla Gimnasio (design §8). Selector de día Superior/Inferior
+// (Superior A/Inferior A/Superior B/Inferior B),
 // MuscleHeatMap del día, SessionClock, lista de ExerciseCard y acceso a la
 // herramienta Cronómetro/Temporizador (feature B) embebida en un Modal.
 // El RestTimer/SessionClock y la herramienta Cronómetro/Temporizador son SEPARADOS.
@@ -29,8 +30,8 @@ const MODE_SEGMENTS: SegmentOption<GymMode>[] = [
 ];
 
 const PHASE_SEGMENTS: SegmentOption<RoutineWeekPhase>[] = [
-  { id: 'semana1', label: 'Semana 1' },
-  { id: 'semana2plus', label: 'Semana 2+' },
+  { id: 'semana1', label: 'Fase 1' },
+  { id: 'semana2plus', label: 'Fase 2' },
 ];
 
 export default function GimnasioScreen() {
@@ -60,8 +61,8 @@ export default function GimnasioScreen() {
       <header className={styles.header}>
         <h1 className={styles.title}>Gimnasio</h1>
         <p className={styles.subtitle}>
-          Dos fases · Semana 1 variada y Semana 2+ por grupos · 4 días cada
-          una, pensadas para caber en 60 minutos.
+          División Superior/Inferior · 2 fases de 4 días · cada músculo
+          ~2×/semana para quemar grasa y tonificar · ~60 min por sesión.
         </p>
       </header>
 
@@ -92,7 +93,7 @@ export default function GimnasioScreen() {
             aria-pressed={d.id === dayId}
             onClick={() => setDayId(d.id)}
           >
-            {d.name}
+            {d.shortName ?? d.name}
           </button>
         ))}
       </nav>

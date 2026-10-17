@@ -1,6 +1,6 @@
 # Kiro — Nutrición y Fuerza
 
-Kiro es una **PWA (Progressive Web App) mono-usuario, 100% local y sin backend** para bajar de peso y tonificar. Guía el entrenamiento de fuerza (rutina Torso/Pierna de 4 días pensada para caber en 1 hora) y calcula la nutrición a partir de tu estudio de bioimpedancia (Evolt). Toda la interfaz está en español y usa un tema oscuro premium, mobile-first.
+Kiro es una **PWA (Progressive Web App) mono-usuario, 100% local y sin backend** para bajar de peso y tonificar. Guía el entrenamiento de fuerza (rutina Superior/Inferior de 4 días basada en evidencia, pensada para caber en 1 hora) y calcula la nutrición a partir de tu estudio de bioimpedancia (Evolt). Toda la interfaz está en español y usa un tema oscuro premium, mobile-first.
 
 La app es instalable y funciona offline: el app shell y toda la lógica (nutrición, rutina, mapa muscular, temporizadores) se ejecutan en el dispositivo. Solo las imágenes externas de los ejercicios necesitan red la primera vez.
 
@@ -9,7 +9,7 @@ La app es instalable y funciona offline: el app shell y toda la lógica (nutrici
 - **Perfil & Evolt:** registro del estudio de bioimpedancia (edad, altura, sexo, peso, % de grasa y masa muscular esquelética) con histórico y gráficas de progreso.
 - **Nutrición:** plan diario derivado en vivo del perfil. Calcula el gasto con Katch-McArdle, aplica un déficit del 20% y reparte las calorías en 4 comidas (Pre-entreno, Post-entreno, Almuerzo, Cena) con gramos exactos en crudo y nota de peso cocinado.
 - **Gimnasio:** control segmentado **Musculación / Cardio**.
-  - *Musculación:* rutina Torso/Pierna (4 días × 5 ejercicios × 3 series), mapa de calor muscular, indicador de ritmo (TUT), temporizador de descanso, reloj de sesión y registro fluido de series.
+  - *Musculación:* rutina **Superior/Inferior basada en evidencia** para pérdida de grasa y tonificación, adaptada de una estructura de programa *4-day upper/lower*. Dos fases seleccionables (**Fase 1 · Base**, reps moderadas; **Fase 2 · Intensidad**, el compuesto principal de cada día sube una serie y baja de reps), cada una con 4 días (Superior A, Inferior A, Superior B, Inferior B). La división de 2 Superior + 2 Inferior trabaja cada grupo muscular ~2×/semana, el patrón de frecuencia asociado a quemar grasa y tonificar. Incluye mapa de calor muscular, indicador de ritmo (TUT), temporizador de descanso, reloj de sesión y registro fluido de series.
   - *Cardio (aeróbico):* registro de sesiones de **correr** y **bici** (duración en minutos, distancia en km, calorías y notas opcionales), con lista de sesiones recientes y borrado. Se guarda por separado de la fuerza.
 - **Estadísticas:** control segmentado con 5 secciones (Cuerpo, Fuerza, Cardio, Nutrición, Adherencia) y selector de rango Semana/Mes/Todo. Muestra composición corporal, volumen y progresión de fuerza (1RM estimado por Epley), métricas de cardio (total de km/min, sesiones y desglose correr vs bici, sin mezclarse con la fuerza), objetivo nutricional y constancia. La **Adherencia** cuenta tanto los días de fuerza como los de cardio.
 - **Notificaciones:** recordatorios de registro de peso, hidratación y próximo test de bioimpedancia, con la lista de próximos avisos siempre calculada.

@@ -92,9 +92,9 @@ describe('estructura de la rutina (dos fases)', () => {
     expect(routinesByPhase.semana2plus).toHaveLength(4);
   });
 
-  it('ids de día con prefijo de fase', () => {
-    expect(routinesByPhase.semana1.map((d) => d.id)).toEqual(['s1-d1', 's1-d2', 's1-d3', 's1-d4']);
-    expect(routinesByPhase.semana2plus.map((d) => d.id)).toEqual(['s2-d1', 's2-d2', 's2-d3', 's2-d4']);
+  it('ids de día Superior/Inferior con prefijo de fase', () => {
+    expect(routinesByPhase.semana1.map((d) => d.id)).toEqual(['f1-sup-a', 'f1-inf-a', 'f1-sup-b', 'f1-inf-b']);
+    expect(routinesByPhase.semana2plus.map((d) => d.id)).toEqual(['f2-sup-a', 'f2-inf-a', 'f2-sup-b', 'f2-inf-b']);
   });
 
   it('los 8 ids de día son únicos entre fases', () => {
@@ -103,13 +103,37 @@ describe('estructura de la rutina (dos fases)', () => {
     expect(ids).toHaveLength(8);
   });
 
-  it('Semana 1: 5 ejercicios por día; Semana 2+: 5 o 6', () => {
-    for (const day of routinesByPhase.semana1) {
-      expect(day.exercises).toHaveLength(5);
+  it('cada día tiene 5 o 6 ejercicios y la fase suma 22', () => {
+    for (const phase of [routinesByPhase.semana1, routinesByPhase.semana2plus]) {
+      for (const day of phase) {
+        expect(day.exercises.length).toBeGreaterThanOrEqual(5);
+        expect(day.exercises.length).toBeLessThanOrEqual(6);
+      }
+      const total = phase.reduce((sum, d) => sum + d.exercises.length, 0);
+      expect(total).toBe(22);
     }
-    for (const day of routinesByPhase.semana2plus) {
-      expect(day.exercises.length).toBeGreaterThanOrEqual(5);
-      expect(day.exercises.length).toBeLessThanOrEqual(6);
+  });
+
+  it('cada día expone shortName; los de una fase son Superior/Inferior A/B', () => {
+    const expected = ['Superior A', 'Inferior A', 'Superior B', 'Inferior B'];
+    expect(routinesByPhase.semana1.map((d) => d.shortName)).toEqual(expected);
+    expect(routinesByPhase.semana2plus.map((d) => d.shortName)).toEqual(expected);
+  });
+
+  it('frecuencia 2×/semana: cada grupo principal aparece en 2 días por fase', () => {
+    const principales: Array<(typeof allDays)[number]['muscles'][number]> = [
+      'chest', 'back', 'shoulders', 'biceps', 'triceps', 'quads', 'glutes', 'hamstrings', 'calves',
+    ];
+    for (const phase of [routinesByPhase.semana1, routinesByPhase.semana2plus]) {
+      const count = new Map<string, number>();
+      for (const day of phase) {
+        for (const m of day.muscles) {
+          count.set(m, (count.get(m) ?? 0) + 1);
+        }
+      }
+      for (const muscle of principales) {
+        expect(count.get(muscle)).toBe(2);
+      }
     }
   });
 
