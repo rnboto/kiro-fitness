@@ -22,9 +22,12 @@ import {
   getAllCardioSessions,
   type CardioSession,
 } from '../../storage';
+import SegmentedControl from '../estadisticas/SegmentedControl';
+import CardioRoutinesGuide from './CardioRoutinesGuide';
 import styles from './CardioView.module.css';
 
 type CardioType = 'correr' | 'bici';
+type CardioViewTab = 'registro' | 'rutinas';
 
 const TYPE_LABEL: Record<CardioType, string> = {
   correr: 'Correr',
@@ -62,6 +65,7 @@ function sessionComputedLine(s: CardioSession): string {
 }
 
 export default function CardioView() {
+  const [view, setView] = useState<CardioViewTab>('registro');
   const [type, setType] = useState<CardioType>('correr');
   const [minutes, setMinutes] = useState(30);
   const [seconds, setSeconds] = useState(0);
@@ -120,7 +124,21 @@ export default function CardioView() {
 
   return (
     <div className={styles.cardio}>
-      <section className={styles.form}>
+      <SegmentedControl<CardioViewTab>
+        options={[
+          { id: 'registro', label: 'Registro' },
+          { id: 'rutinas', label: 'Rutinas' },
+        ]}
+        value={view}
+        onChange={setView}
+        ariaLabel="Vista de cardio"
+      />
+
+      {view === 'rutinas' ? (
+        <CardioRoutinesGuide />
+      ) : (
+        <>
+          <section className={styles.form}>
         <h2 className={styles.formTitle}>Registrar sesión de cardio</h2>
 
         <div className={styles.typeRow} role="group" aria-label="Tipo de cardio">
@@ -299,6 +317,8 @@ export default function CardioView() {
           </ul>
         )}
       </section>
+        </>
+      )}
     </div>
   );
 }
