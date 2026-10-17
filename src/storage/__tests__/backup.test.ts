@@ -3,6 +3,7 @@ import { __resetBackendForTests } from '../db';
 import { addEntry, getAllEntries } from '../profileStore';
 import { addSet, getAllSets } from '../workoutLogStore';
 import { addCardioSession, getAllCardioSessions } from '../cardioStore';
+import { addAttendanceMark, getAllAttendanceMarks } from '../attendanceMarkStore';
 import { getSettings, saveSettings } from '../settingsStore';
 import { exportAll, importMerge, importReplace } from '../backup';
 import { DEFAULT_SETTINGS } from '../types';
@@ -37,6 +38,8 @@ async function seed() {
     distanceKm: 5,
   });
   await saveSettings({ ...DEFAULT_SETTINGS, activityFactor: 1.55 });
+  await addAttendanceMark('2024-06-20');
+  await addAttendanceMark('2024-06-21');
 }
 
 describe('exportAll', () => {
@@ -48,6 +51,38 @@ describe('exportAll', () => {
     expect(backup.sets).toHaveLength(1);
     expect(backup.cardio).toHaveLength(1);
     expect(backup.settings.activityFactor).toBe(1.55);
+    expect(backup.attendance).toEqual(['2024-06-20', '2024-06-21']);
+  });
+});
+
+describe('attendance en import', () => {
+  it('importReplace restaura exactamente las marcas del backup', async () => {
+    await seed();
+    const backup = await exportAll();
+
+    __resetBackendForTests();
+    localStorage.clear();
+    await addAttendanceMark('1999-01-01'); // marca previa que debe desaparecer
+
+    await importReplace(backup);
+    expect(await getAllAttendanceMarks()).toEqual(['2024-06-20', '2024-06-21']);
+  });
+
+  it('importMerge añade solo las marcas ausentes', async () => {
+    await seed(); // marcas 2024-06-20 y 2024-06-21
+    const backup = await exportAll();
+
+    __resetBackendForTests();
+    localStorage.clear();
+    await addAttendanceMark('2024-06-20'); // ya existe
+    await addAttendanceMark('2024-06-25'); // se conserva
+
+    await importMerge(backup);
+    expect(await getAllAttendanceMarks()).toEqual([
+      '2024-06-20',
+      '2024-06-21',
+      '2024-06-25',
+    ]);
   });
 });
 

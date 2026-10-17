@@ -1,0 +1,85 @@
+/* Calendario mensual de asistencia (Adherencia). Rejilla de 7 columnas,
+   compacta y pensada para móvil. */
+
+.calendar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--kiro-space-3);
+}
+
+.nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--kiro-space-2);
+}
+
+.navBtn {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--kiro-radius-pill);
+  background: var(--kiro-surface);
+  border: 1px solid var(--kiro-border);
+  color: var(--kiro-text);
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.navBtn:hover {
+  border-color: var(--kiro-accent);
+}
+
+.monthLabel {
+  font-weight: 700;
+  text-transform: capitalize;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+
+.weekday {
+  text-align: center;
+  font-size: var(--kiro-font-size-xs);
+  color: var(--kiro-text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding-bottom: 2px;
+}
+
+.blank {
+  aspect-ratio: 1 / 1;
+}
+
+.cell {
+  aspect-ratio: 1 / 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--kiro-radius-md);
+  background: var(--kiro-surface);
+  border: 1px solid var(--kiro-border);
+  color: var(--kiro-text);
+  font-size: var(--kiro-font-size-sm);
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+}
+
+.cell:disabled {
+  cursor: default;
+}
+
+.trained {
+  background: var(--kiro-accent);
+  border-color: var(--kiro-accent);
+  color: #06241b;
+  font-weight: 800;
+}
+
+.today {
+  box-shadow: 0 0 0 2px var(--kiro-accent-strong);
+}

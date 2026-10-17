@@ -6,7 +6,12 @@
 // La API expuesta es común a ambos backends. Las claves de autoincrement se
 // gestionan en JS cuando el backend es localStorage.
 
-export type StoreName = 'profiles' | 'workoutSets' | 'cardioSessions' | 'settings';
+export type StoreName =
+  | 'profiles'
+  | 'workoutSets'
+  | 'cardioSessions'
+  | 'settings'
+  | 'attendanceMarks';
 
 /** Definición de un object store. */
 interface StoreDef {
@@ -19,7 +24,8 @@ interface StoreDef {
 
 const DB_NAME = 'kiro-db';
 // v2: añade el object store 'cardioSessions' (feature cardio).
-const DB_VERSION = 2;
+// v3: añade el object store 'attendanceMarks' (calendario de asistencia).
+const DB_VERSION = 3;
 
 const STORE_DEFS: StoreDef[] = [
   {
@@ -31,6 +37,7 @@ const STORE_DEFS: StoreDef[] = [
   { name: 'workoutSets', keyPath: 'id', autoIncrement: true },
   { name: 'cardioSessions', keyPath: 'id', autoIncrement: true },
   { name: 'settings', keyPath: 'key', autoIncrement: false },
+  { name: 'attendanceMarks', keyPath: 'date', autoIncrement: false },
 ];
 
 function storeDef(name: StoreName): StoreDef {

@@ -136,6 +136,55 @@ describe('mergeBackup', () => {
   });
 });
 
+describe('attendance (marcas manuales) en backup', () => {
+  it('un backup antiguo SIN la clave attendance parsea ok con attendance = []', () => {
+    const legacy = {
+      schemaVersion: 1,
+      exportedAt: NOW.toISOString(),
+      profiles: [],
+      sets: [],
+      cardio: [],
+      settings,
+    };
+    const result = parseBackup(JSON.stringify(legacy));
+    expect(result.ok).toBe(true);
+    if (result.ok) expect(result.backup.attendance).toEqual([]);
+  });
+
+  it('un backup CON attendance hace round-trip del array', () => {
+    const backup = buildBackup({ ...data, attendance: ['2024-06-01', '2024-06-05'] }, NOW);
+    const result = parseBackup(serializeBackup(backup));
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.backup.attendance).toEqual(['2024-06-01', '2024-06-05']);
+    }
+  });
+
+  it('attendance no-array se normaliza a [] sin rechazar el archivo', () => {
+    const broken = {
+      schemaVersion: 1,
+      exportedAt: NOW.toISOString(),
+      profiles: [],
+      sets: [],
+      cardio: [],
+      settings,
+      attendance: 'no-es-array',
+    };
+    const result = parseBackup(JSON.stringify(broken));
+    expect(result.ok).toBe(true);
+    if (result.ok) expect(result.backup.attendance).toEqual([]);
+  });
+
+  it('mergeBackup une las marcas de asistencia sin duplicados', () => {
+    const incoming = buildBackup(
+      { ...data, attendance: ['2024-06-05', '2024-06-10'] },
+      NOW,
+    );
+    const merged = mergeBackup({ ...data, attendance: ['2024-06-05', '2024-06-01'] }, incoming);
+    expect(merged.attendance).toEqual(['2024-06-01', '2024-06-05', '2024-06-10']);
+  });
+});
+
 describe('toCsv', () => {
   it('emite cabecera con columna tipo y una fila por entrada en rango', () => {
     const csv = toCsv(data, new Date('2024-06-01'), new Date('2024-06-30'));

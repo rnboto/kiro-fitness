@@ -34,4 +34,11 @@ export {
 
 export { getSettings, saveSettings } from './settingsStore';
 
+export {
+  addAttendanceMark,
+  removeAttendanceMark,
+  getAllAttendanceMarks,
+  type AttendanceMark,
+} from './attendanceMarkStore';
+
 export { exportAll, importReplace, importMerge } from './backup';

@@ -15,6 +15,8 @@ export interface KiroBackup {
   sets: LoggedSet[];
   cardio: CardioSession[];
   settings: Settings;
+  /** Marcas manuales de asistencia ('YYYY-MM-DD'). Opcional por compatibilidad. */
+  attendance?: string[];
 }
 
 /** Datos crudos a empaquetar en un backup. */
@@ -23,6 +25,8 @@ export interface BackupData {
   sets: LoggedSet[];
   cardio: CardioSession[];
   settings: Settings;
+  /** Marcas manuales de asistencia ('YYYY-MM-DD'). Opcional por compatibilidad. */
+  attendance?: string[];
 }
 
 /** Resultado de parsear un backup: éxito con datos o error en español. */
@@ -39,6 +43,7 @@ export function buildBackup(data: BackupData, now: Date = new Date()): KiroBacku
     sets: data.sets,
     cardio: data.cardio,
     settings: data.settings,
+    attendance: data.attendance ?? [],
   };
 }
 
@@ -84,6 +89,13 @@ export function parseBackup(text: string): ParseResult {
   if (!isObject(parsed.settings)) {
     return { ok: false, error: 'El archivo no contiene unos ajustes válidos.' };
   }
+  // `attendance` es opcional: los backups antiguos no lo traen. Solo se acepta
+  // cuando es un array de strings; si no, se usa [] (sin rechazar el archivo).
+  const attendance =
+    Array.isArray(parsed.attendance) &&
+    parsed.attendance.every((v) => typeof v === 'string')
+      ? (parsed.attendance as string[])
+      : [];
   return {
     ok: true,
     backup: {
@@ -93,6 +105,7 @@ export function parseBackup(text: string): ParseResult {
       sets: parsed.sets as LoggedSet[],
       cardio: parsed.cardio as CardioSession[],
       settings: parsed.settings as unknown as Settings,
+      attendance,
     },
   };
 }
@@ -116,11 +129,15 @@ function mergeById<T extends { id: number }>(current: T[], incoming: T[]): T[] {
  * conservan (la fusión no toca settings).
  */
 export function mergeBackup(current: BackupData, incoming: KiroBackup): BackupData {
+  const attendance = Array.from(
+    new Set([...(current.attendance ?? []), ...(incoming.attendance ?? [])]),
+  ).sort((a, b) => a.localeCompare(b));
   return {
     profiles: mergeById(current.profiles, incoming.profiles),
     sets: mergeById(current.sets, incoming.sets),
     cardio: mergeById(current.cardio, incoming.cardio),
     settings: current.settings,
+    attendance,
   };
 }
 

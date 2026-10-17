@@ -7,6 +7,10 @@ import { getAllSets } from './workoutLogStore';
 import { getAllCardioSessions } from './cardioStore';
 import { getSettings, saveSettings } from './settingsStore';
 import {
+  addAttendanceMark,
+  getAllAttendanceMarks,
+} from './attendanceMarkStore';
+import {
   buildBackup,
   mergeBackup,
   type BackupData,
@@ -16,13 +20,14 @@ import type { CardioSession, LoggedSet, ProfileEntry } from './types';
 
 /** Lee todos los datos actuales en un objeto plano. */
 async function readAllData(): Promise<BackupData> {
-  const [profiles, sets, cardio, settings] = await Promise.all([
+  const [profiles, sets, cardio, settings, attendance] = await Promise.all([
     getAllEntries(),
     getAllSets(),
     getAllCardioSessions(),
     getSettings(),
+    getAllAttendanceMarks(),
   ]);
-  return { profiles, sets, cardio, settings };
+  return { profiles, sets, cardio, settings, attendance };
 }
 
 /** Construye un backup completo con todos los datos on-device. */
@@ -56,6 +61,12 @@ export async function importReplace(backup: KiroBackup): Promise<void> {
   await replaceStore<LoggedSet>('workoutSets', backup.sets);
   await replaceStore<CardioSession>('cardioSessions', backup.cardio);
   await saveSettings(backup.settings);
+  // Reemplaza las marcas manuales de asistencia por las del backup.
+  const backend = await getBackend();
+  await backend.clear('attendanceMarks');
+  for (const date of backup.attendance ?? []) {
+    await addAttendanceMark(date);
+  }
 }
 
 /**
@@ -69,4 +80,10 @@ export async function importMerge(backup: KiroBackup): Promise<void> {
   await replaceStore<LoggedSet>('workoutSets', merged.sets);
   await replaceStore<CardioSession>('cardioSessions', merged.cardio);
   // settings se conserva (mergeBackup no lo cambia); no se reescribe.
+  // Añade solo las marcas de asistencia que aún no existan (addAttendanceMark
+  // es idempotente, pero evitamos escrituras innecesarias).
+  const existing = new Set(current.attendance ?? []);
+  for (const date of merged.attendance ?? []) {
+    if (!existing.has(date)) await addAttendanceMark(date);
+  }
 }

@@ -1,14 +1,25 @@
 // Pestaña Adherencia: entrenos completados y consistencia del registro de peso
-// (días con medición) dentro del rango seleccionado.
+// (días con medición) dentro del rango seleccionado, más el calendario mensual
+// de asistencia (días entrenados automáticos + marcas manuales) y su resumen.
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useProfile } from '../../context/ProfileContext';
 import {
+  addAttendanceMark,
+  getAllAttendanceMarks,
   getAllCardioSessions,
   getAllSets,
+  removeAttendanceMark,
   type CardioSession,
   type LoggedSet,
 } from '../../storage';
+import {
+  countTrainedInMonth,
+  selectCurrentStreak,
+  selectTrainedDays,
+  selectTrainedDaysWithManual,
+} from '../../domain/attendance';
+import AttendanceCalendar, { type ViewMonth } from './AttendanceCalendar';
 import RangeSelector from './RangeSelector';
 import { selectAdherenceStats, type StatsRange } from './statsSelectors';
 import styles from './tabs.module.css';
@@ -18,17 +29,25 @@ export default function AdherenciaTab() {
   const [range, setRange] = useState<StatsRange>('mes');
   const [sets, setSets] = useState<LoggedSet[]>([]);
   const [cardio, setCardio] = useState<CardioSession[]>([]);
+  const [manualMarks, setManualMarks] = useState<string[]>([]);
+  const now = useMemo(() => new Date(), []);
+  const [viewMonth, setViewMonth] = useState<ViewMonth>(() => ({
+    year: now.getFullYear(),
+    month: now.getMonth(),
+  }));
 
   useEffect(() => {
     let active = true;
     (async () => {
-      const [allSets, allCardio] = await Promise.all([
+      const [allSets, allCardio, allMarks] = await Promise.all([
         getAllSets(),
         getAllCardioSessions(),
+        getAllAttendanceMarks(),
       ]);
       if (active) {
         setSets(allSets);
         setCardio(allCardio);
+        setManualMarks(allMarks ?? []);
       }
     })();
     return () => {
@@ -39,6 +58,38 @@ export default function AdherenciaTab() {
   const stats = useMemo(
     () => selectAdherenceStats(sets, history, cardio, range),
     [sets, history, cardio, range],
+  );
+
+  // Días automáticos (fuerza/cardio) y días resaltados (auto O manual).
+  const autoDays = useMemo(() => selectTrainedDays(sets, cardio), [sets, cardio]);
+  const trainedDays = useMemo(
+    () => selectTrainedDaysWithManual(sets, cardio, manualMarks),
+    [sets, cardio, manualMarks],
+  );
+
+  const trainedThisMonth = useMemo(
+    () => countTrainedInMonth(trainedDays, viewMonth.year, viewMonth.month),
+    [trainedDays, viewMonth],
+  );
+  const streak = useMemo(
+    () => selectCurrentStreak(trainedDays, now),
+    [trainedDays, now],
+  );
+
+  // Alterna una marca manual (solo días no automáticos; el calendario ya lo
+  // garantiza). Actualiza el estado local de forma optimista.
+  const handleToggle = useCallback(
+    (dateKey: string) => {
+      setManualMarks((prev) => {
+        if (prev.includes(dateKey)) {
+          void removeAttendanceMark(dateKey);
+          return prev.filter((d) => d !== dateKey);
+        }
+        void addAttendanceMark(dateKey);
+        return [...prev, dateKey];
+      });
+    },
+    [],
   );
 
   const rangeLabel = stats.rangeDays ? `últimos ${stats.rangeDays} días` : 'todo el histórico';
@@ -68,6 +119,28 @@ export default function AdherenciaTab() {
           <span className={styles.metricValue}>{stats.daysWithWeightLog}</span>
         </div>
       </div>
+
+      <section className={styles.card}>
+        <h3 className={styles.cardTitle}>Calendario de asistencia</h3>
+        <p className={styles.rowMeta}>Toca un día para marcar que entrenaste.</p>
+        <AttendanceCalendar
+          trainedDays={trainedDays}
+          autoDays={autoDays}
+          onToggle={handleToggle}
+          now={now}
+          onViewMonthChange={setViewMonth}
+        />
+        <div className={styles.metrics}>
+          <div className={styles.metric}>
+            <span className={styles.metricLabel}>Días entrenados este mes</span>
+            <span className={styles.metricValue}>{trainedThisMonth}</span>
+          </div>
+          <div className={styles.metric}>
+            <span className={styles.metricLabel}>Racha</span>
+            <span className={styles.metricValue}>{streak}</span>
+          </div>
+        </div>
+      </section>
 
       <section className={styles.card}>
         <h3 className={styles.cardTitle}>Resumen ({rangeLabel})</h3>
