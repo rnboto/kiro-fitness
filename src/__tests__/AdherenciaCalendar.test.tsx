@@ -1,7 +1,7 @@
 // Integración (Testing Library + jsdom) del calendario de asistencia dentro de
-// la pestaña Adherencia: siembra una serie de fuerza y una sesión de cardio,
-// navega a Estadísticas → Adherencia y comprueba el calendario, el resaltado de
-// un día automático, el alternado manual y el resumen (racha / días del mes).
+// la pantalla Perfil: siembra una serie de fuerza y una sesión de cardio,
+// navega a Perfil y comprueba el calendario, el resaltado de un día automático,
+// el alternado manual y el resumen (racha / días del mes).
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { render, screen, cleanup, within, waitFor } from '@testing-library/react';
@@ -36,7 +36,7 @@ async function completeOnboarding(user: ReturnType<typeof userEvent.setup>) {
   await screen.findByRole('navigation', { name: /navegación principal/i });
 }
 
-describe('Calendario de asistencia (Adherencia)', () => {
+describe('Calendario de asistencia (Perfil)', () => {
   it('renderiza el mes actual, resalta un día automático, alterna uno manual y muestra el resumen', async () => {
     const user = userEvent.setup();
 
@@ -61,11 +61,9 @@ describe('Calendario de asistencia (Adherencia)', () => {
     render(<App />);
     await completeOnboarding(user);
 
+    // Perfil no está gateado: accesible directamente tras el onboarding.
     const nav = screen.getByRole('navigation', { name: /navegación principal/i });
-    await user.click(within(nav).getByRole('button', { name: /Estadísticas/i }));
-
-    const tablist = screen.getByRole('tablist', { name: /sección de estadísticas/i });
-    await user.click(within(tablist).getByRole('tab', { name: 'Adherencia' }));
+    await user.click(within(nav).getByRole('button', { name: /Perfil/i }));
 
     // El calendario muestra el nombre del mes actual en español.
     const monthName = MONTH_NAMES[now.getMonth()];

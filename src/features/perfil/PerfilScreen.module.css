@@ -29,6 +29,44 @@
   font-size: var(--kiro-font-size-lg);
 }
 
+/* Línea de ayuda del calendario (bajo el título). */
+.calHelper {
+  color: var(--kiro-text-muted);
+  font-size: var(--kiro-font-size-sm);
+  margin-top: var(--kiro-space-1);
+  margin-bottom: var(--kiro-space-4);
+}
+
+/* Rejilla de métricas del calendario (Días este mes / Racha). */
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--kiro-space-3);
+  margin-top: var(--kiro-space-4);
+}
+
+.metric {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  background: var(--kiro-surface);
+  border: 1px solid var(--kiro-border);
+  border-radius: var(--kiro-radius-md);
+  padding: var(--kiro-space-3);
+}
+
+.metricLabel {
+  font-size: var(--kiro-font-size-xs);
+  color: var(--kiro-text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.metricValue {
+  font-size: var(--kiro-font-size-lg);
+  font-weight: 700;
+}
+
 .cardDate {
   color: var(--kiro-text-muted);
   font-size: var(--kiro-font-size-sm);
