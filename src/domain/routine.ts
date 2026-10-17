@@ -42,8 +42,8 @@ export interface Exercise {
 
 export interface WorkoutDay {
   id: DayId;
-  name: string; // nombre largo para el header del día ('Fase 1 · Superior A ...')
-  shortName?: string; // etiqueta corta para la nav de días ('Superior A')
+  name: string; // nombre largo para el header del día ('Día 1 — Superior (Fuerza)')
+  shortName?: string; // etiqueta corta para la nav de días ('Día 1')
   muscles: MuscleId[];
   exercises: Exercise[];
 }
@@ -168,11 +168,11 @@ function makeDay(id: DayId, name: string, shortName: string, exercises: Exercise
 /**
  * Rutina Superior/Inferior de dos fases, 4 días cada una (2 Superior + 2
  * Inferior → cada grupo muscular ~2×/semana). Las claves `semana1`/`semana2plus`
- * se mantienen por compatibilidad de persistencia; el display es "Fase 1"/"Fase 2".
+ * se mantienen por compatibilidad de persistencia; el display es "Semanas 1-4"/"Semanas 5-8".
  */
 export const routinesByPhase: Record<RoutineWeekPhase, WorkoutDay[]> = {
   semana1: [
-    makeDay('f1-sup-a', 'Fase 1 · Superior A (Fuerza)', 'Superior A', [
+    makeDay('f1-sup-a', 'Día 1 — Superior (Fuerza)', 'Día 1', [
       makeExercise('bench_press', 'Press banca con barra', 4, '6-8', 90, ['chest', 'triceps', 'shoulders'], DB_ID.bench_press),
       makeExercise('barbell_row', 'Remo con barra', 4, '8-10', 90, ['back', 'biceps'], DB_ID.barbell_row),
       makeExercise('arnold_press', 'Press hombro (Arnold) con mancuernas', 3, '8-10', 75, ['shoulders', 'triceps'], DB_ID.arnold_press),
@@ -180,14 +180,14 @@ export const routinesByPhase: Record<RoutineWeekPhase, WorkoutDay[]> = {
       makeExercise('cable_tricep_ext', 'Extensión de tríceps en polea', 3, '10-12', 45, ['triceps'], DB_ID.cable_tricep_ext),
       makeExercise('barbell_curl', 'Curl con barra', 3, '10-12', 45, ['biceps'], DB_ID.barbell_curl),
     ]),
-    makeDay('f1-inf-a', 'Fase 1 · Inferior A (Fuerza)', 'Inferior A', [
+    makeDay('f1-inf-a', 'Día 2 — Inferior (Fuerza)', 'Día 2', [
       makeExercise('back_squat', 'Sentadilla con barra', 4, '6-8', 120, ['quads', 'glutes'], DB_ID.back_squat),
       makeExercise('leg_press', 'Prensa de piernas', 3, '10-12', 90, ['quads', 'glutes'], DB_ID.leg_press),
       makeExercise('hip_thrust', 'Empuje de cadera con barra', 3, '8-10', 90, ['glutes', 'hamstrings'], DB_ID.hip_thrust),
       makeExercise('glute_bridge', 'Curl femoral / puente de glúteo', 3, '10-12', 60, ['hamstrings', 'glutes'], DB_ID.glute_bridge),
       makeExercise('seated_calf', 'Elevación de gemelos sentado', 4, '15-20', 45, ['calves'], DB_ID.seated_calf),
     ]),
-    makeDay('f1-sup-b', 'Fase 1 · Superior B (Volumen)', 'Superior B', [
+    makeDay('f1-sup-b', 'Día 3 — Superior (Volumen)', 'Día 3', [
       makeExercise('incline_bench', 'Press banca inclinado con barra', 3, '8-10', 75, ['chest', 'shoulders'], DB_ID.incline_bench),
       makeExercise('db_row', 'Remo con mancuernas', 3, '10-12', 75, ['back', 'biceps'], DB_ID.db_row),
       makeExercise('lateral_raise', 'Elevaciones laterales', 4, '12-15', 45, ['shoulders'], DB_ID.lateral_raise),
@@ -195,7 +195,7 @@ export const routinesByPhase: Record<RoutineWeekPhase, WorkoutDay[]> = {
       makeExercise('hammer_curl', 'Curl martillo alterno', 3, '10-12', 45, ['biceps', 'forearms'], DB_ID.hammer_curl),
       makeExercise('bench_dips', 'Fondos en banco', 3, '10-12', 45, ['triceps'], DB_ID.bench_dips),
     ]),
-    makeDay('f1-inf-b', 'Fase 1 · Inferior B (Volumen)', 'Inferior B', [
+    makeDay('f1-inf-b', 'Día 4 — Inferior (Volumen)', 'Día 4', [
       makeExercise('barbell_lunge', 'Zancadas con barra', 3, '10-12', 75, ['quads', 'glutes'], DB_ID.barbell_lunge),
       makeExercise('glute_bridge', 'Puente de glúteo con barra', 3, '12-15', 60, ['glutes', 'hamstrings'], DB_ID.glute_bridge),
       makeExercise('leg_press', 'Prensa de piernas', 3, '12-15', 60, ['quads', 'glutes'], DB_ID.leg_press),
@@ -204,7 +204,7 @@ export const routinesByPhase: Record<RoutineWeekPhase, WorkoutDay[]> = {
     ]),
   ],
   semana2plus: [
-    makeDay('f2-sup-a', 'Fase 2 · Superior A (Fuerza)', 'Superior A', [
+    makeDay('f2-sup-a', 'Día 1 — Superior (Fuerza)', 'Día 1', [
       makeExercise('bench_press', 'Press banca con barra', 5, '4-6', 120, ['chest', 'triceps', 'shoulders'], DB_ID.bench_press),
       makeExercise('barbell_row', 'Remo con barra', 4, '6-8', 90, ['back', 'biceps'], DB_ID.barbell_row),
       makeExercise('arnold_press', 'Press hombro (Arnold) con mancuernas', 3, '8-10', 75, ['shoulders', 'triceps'], DB_ID.arnold_press),
@@ -212,14 +212,14 @@ export const routinesByPhase: Record<RoutineWeekPhase, WorkoutDay[]> = {
       makeExercise('cable_tricep_ext', 'Extensión de tríceps en polea', 3, '10-12', 45, ['triceps'], DB_ID.cable_tricep_ext),
       makeExercise('barbell_curl', 'Curl con barra', 3, '10-12', 45, ['biceps'], DB_ID.barbell_curl),
     ]),
-    makeDay('f2-inf-a', 'Fase 2 · Inferior A (Fuerza)', 'Inferior A', [
+    makeDay('f2-inf-a', 'Día 2 — Inferior (Fuerza)', 'Día 2', [
       makeExercise('back_squat', 'Sentadilla con barra', 5, '4-6', 150, ['quads', 'glutes'], DB_ID.back_squat),
       makeExercise('leg_press', 'Prensa de piernas', 4, '8-10', 90, ['quads', 'glutes'], DB_ID.leg_press),
       makeExercise('hip_thrust', 'Empuje de cadera con barra', 3, '8-10', 90, ['glutes', 'hamstrings'], DB_ID.hip_thrust),
       makeExercise('glute_bridge', 'Curl femoral / puente de glúteo', 3, '10-12', 60, ['hamstrings', 'glutes'], DB_ID.glute_bridge),
       makeExercise('seated_calf', 'Elevación de gemelos sentado', 4, '15-20', 45, ['calves'], DB_ID.seated_calf),
     ]),
-    makeDay('f2-sup-b', 'Fase 2 · Superior B (Volumen)', 'Superior B', [
+    makeDay('f2-sup-b', 'Día 3 — Superior (Volumen)', 'Día 3', [
       makeExercise('incline_bench', 'Press banca inclinado con barra', 4, '6-8', 90, ['chest', 'shoulders'], DB_ID.incline_bench),
       makeExercise('db_row', 'Remo con mancuernas', 3, '10-12', 75, ['back', 'biceps'], DB_ID.db_row),
       makeExercise('lateral_raise', 'Elevaciones laterales', 4, '12-15', 45, ['shoulders'], DB_ID.lateral_raise),
@@ -227,7 +227,7 @@ export const routinesByPhase: Record<RoutineWeekPhase, WorkoutDay[]> = {
       makeExercise('hammer_curl', 'Curl martillo alterno', 3, '10-12', 45, ['biceps', 'forearms'], DB_ID.hammer_curl),
       makeExercise('bench_dips', 'Fondos en banco', 3, '10-12', 45, ['triceps'], DB_ID.bench_dips),
     ]),
-    makeDay('f2-inf-b', 'Fase 2 · Inferior B (Volumen)', 'Inferior B', [
+    makeDay('f2-inf-b', 'Día 4 — Inferior (Volumen)', 'Día 4', [
       makeExercise('barbell_lunge', 'Zancadas con barra', 4, '8-10', 90, ['quads', 'glutes'], DB_ID.barbell_lunge),
       makeExercise('glute_bridge', 'Puente de glúteo con barra', 3, '12-15', 60, ['glutes', 'hamstrings'], DB_ID.glute_bridge),
       makeExercise('leg_press', 'Prensa de piernas', 3, '12-15', 60, ['quads', 'glutes'], DB_ID.leg_press),

@@ -30,8 +30,8 @@ const MODE_SEGMENTS: SegmentOption<GymMode>[] = [
 ];
 
 const PHASE_SEGMENTS: SegmentOption<RoutineWeekPhase>[] = [
-  { id: 'semana1', label: 'Fase 1' },
-  { id: 'semana2plus', label: 'Fase 2' },
+  { id: 'semana1', label: 'Semanas 1-4' },
+  { id: 'semana2plus', label: 'Semanas 5-8' },
 ];
 
 export default function GimnasioScreen() {

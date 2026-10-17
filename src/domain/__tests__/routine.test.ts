@@ -114,8 +114,8 @@ describe('estructura de la rutina (dos fases)', () => {
     }
   });
 
-  it('cada día expone shortName; los de una fase son Superior/Inferior A/B', () => {
-    const expected = ['Superior A', 'Inferior A', 'Superior B', 'Inferior B'];
+  it('cada día expone shortName; los de una fase son Día 1-4', () => {
+    const expected = ['Día 1', 'Día 2', 'Día 3', 'Día 4'];
     expect(routinesByPhase.semana1.map((d) => d.shortName)).toEqual(expected);
     expect(routinesByPhase.semana2plus.map((d) => d.shortName)).toEqual(expected);
   });
