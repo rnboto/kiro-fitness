@@ -3,9 +3,23 @@
 // MuscleHeatMap del día, SessionClock, lista de ExerciseCard y acceso a la
 // herramienta Cronómetro/Temporizador (feature B) embebida en un Modal.
 // El RestTimer/SessionClock y la herramienta Cronómetro/Temporizador son SEPARADOS.
+// Lista de Sustitución: cada tarjeta puede cambiarse por un equivalente del
+// mismo patrón ("Solo hoy" / "Dejar fijo"); tarjetas y heat map usan los
+// ejercicios EFECTIVOS resueltos de forma pura (domain/exerciseSubstitutions).
 
-import { useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSettings } from '../../context/SettingsContext';
+import { toLocalDayKey } from '../../domain/attendance';
+import {
+  alternativesFor,
+  applySwap,
+  effectiveDayMuscles,
+  pruneExpiredSwaps,
+  readExerciseSwaps,
+  resolveDayExercises,
+  restoreSwap,
+} from '../../domain/exerciseSubstitutions';
+import type { ExerciseSwapScope } from '../../storage';
 import {
   routinesByPhase,
   type DayId,
@@ -19,6 +33,7 @@ import ChronoTool from '../timer/ChronoTool';
 import MuscleHeatMap from './MuscleHeatMap';
 import SessionClock from './SessionClock';
 import ExerciseCard from './ExerciseCard';
+import ExerciseSwapSheet from './ExerciseSwapSheet';
 import CardioView from './CardioView';
 import AbsView from './AbsView';
 import styles from './GimnasioScreen.module.css';
@@ -52,6 +67,61 @@ export default function GimnasioScreen() {
   );
   const restSeconds = settings?.restSeconds ?? 60;
   const overrides = settings?.exerciseOverrides ?? {};
+
+  // Sustituciones: 'hoy' vale solo para el día LOCAL actual (se recalcula en
+  // cada render, así que tras medianoche vuelve el original); 'fijo' persiste.
+  const today = toLocalDayKey(new Date().toISOString());
+  const swaps = useMemo(() => readExerciseSwaps(settings), [settings]);
+  const effective = useMemo(
+    () => resolveDayExercises(day, swaps, today),
+    [day, swaps, today],
+  );
+  // El mapa de calor deriva de los ejercicios EFECTIVOS del día.
+  const activeMuscles = useMemo(() => effectiveDayMuscles(effective), [effective]);
+
+  const [swapSlotId, setSwapSlotId] = useState<string | null>(null);
+  const openSlot = useMemo(
+    () => (swapSlotId ? effective.find((e) => e.original.id === swapSlotId) ?? null : null),
+    [effective, swapSlotId],
+  );
+  const swapAlternatives = useMemo(() => {
+    if (!openSlot) return [];
+    const others = effective
+      .filter((e) => e.original.id !== openSlot.original.id)
+      .map((e) => e.exercise.id);
+    return alternativesFor(day.id, openSlot.original, openSlot.exercise.id, others);
+  }, [day.id, effective, openSlot]);
+  const closeSwapSheet = useCallback(() => setSwapSlotId(null), []);
+
+  // La hoja se cierra al cambiar de día, de fase o de modo.
+  useEffect(() => {
+    setSwapSlotId(null);
+  }, [day.id, mode]);
+
+  const handlePick = (key: string, scope: ExerciseSwapScope) => {
+    if (settings && openSlot) {
+      updateSettings({
+        ...settings,
+        exerciseSwaps: applySwap(
+          pruneExpiredSwaps(swaps, today),
+          day.id,
+          openSlot.original.id,
+          key,
+          scope,
+          today,
+        ),
+      });
+    }
+    setSwapSlotId(null);
+  };
+
+  const handleRestore = (originalId: string) => {
+    if (!settings) return;
+    updateSettings({
+      ...settings,
+      exerciseSwaps: restoreSwap(pruneExpiredSwaps(swaps, today), day.id, originalId),
+    });
+  };
 
   const handlePhaseChange = (next: RoutineWeekPhase) => {
     if (settings) updateSettings({ ...settings, routineWeekPhase: next });
@@ -104,7 +174,7 @@ export default function GimnasioScreen() {
 
       <h2 className={styles.dayTitle}>{day.name}</h2>
 
-      <MuscleHeatMap activeMuscles={day.muscles} />
+      <MuscleHeatMap activeMuscles={activeMuscles} />
 
       <SessionClock />
 
@@ -117,16 +187,29 @@ export default function GimnasioScreen() {
       </button>
 
       <div className={styles.exercises}>
-        {day.exercises.map((ex) => (
+        {effective.map((e) => (
           <ExerciseCard
-            key={`${day.id}-${ex.id}`}
-            exercise={ex}
+            key={`${day.id}-${e.original.id}`}
+            exercise={e.exercise}
             dayId={day.id}
-            overrides={overrides[ex.id]}
+            overrides={overrides[e.exercise.id]}
             settingsRestSeconds={restSeconds}
+            original={e.swap ? e.original : undefined}
+            swapScope={e.swap?.scope}
+            onChangeExercise={e.group ? () => setSwapSlotId(e.original.id) : undefined}
+            onRestore={() => handleRestore(e.original.id)}
           />
         ))}
       </div>
+
+          <ExerciseSwapSheet
+            open={openSlot !== null}
+            group={openSlot?.group ?? null}
+            currentName={openSlot?.exercise.name ?? ''}
+            alternatives={swapAlternatives}
+            onPick={handlePick}
+            onClose={closeSwapSheet}
+          />
 
           <Modal
             open={chronoOpen}

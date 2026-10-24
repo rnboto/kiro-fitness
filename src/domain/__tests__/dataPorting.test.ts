@@ -244,3 +244,29 @@ describe('claves opcionales de objetivo de peso', () => {
     }
   });
 });
+
+describe('clave opcional exerciseSwaps', () => {
+  const base = {
+    schemaVersion: 1,
+    exportedAt: NOW.toISOString(),
+    profiles: [],
+    sets: [],
+    cardio: [],
+  };
+
+  it('sin la clave importa y no la inventa', () => {
+    const result = parseBackup(JSON.stringify({ ...base, settings }));
+    expect(result.ok).toBe(true);
+    if (result.ok) expect('exerciseSwaps' in result.backup.settings).toBe(false);
+  });
+
+  it('con sustituciones válidas las conserva', () => {
+    const exerciseSwaps = {
+      'f1-sup-a::bench_press': { toKey: 'db_bench_press', scope: 'hoy', date: '2024-06-15' },
+      'f1-inf-a::back_squat': { toKey: 'goblet_squat', scope: 'fijo', date: '2024-06-01' },
+    };
+    const result = parseBackup(JSON.stringify({ ...base, settings: { ...settings, exerciseSwaps } }));
+    expect(result.ok).toBe(true);
+    if (result.ok) expect(result.backup.settings.exerciseSwaps).toEqual(exerciseSwaps);
+  });
+});

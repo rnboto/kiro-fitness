@@ -170,6 +170,15 @@ describe('selectStrengthStats', () => {
     // La serie de enero queda fuera del mes.
     expect(stats.progress.every((p) => p.bestWeightKg !== 999)).toBe(true);
   });
+
+  it('nombra los ejercicios sustitutos desde la base de sustituciones', () => {
+    const stats = selectStrengthStats(
+      [set('2024-06-12T07:00:00.000Z', { exerciseId: 'db_bench_press' })],
+      'todo',
+      NOW,
+    );
+    expect(stats.progress[0].name).toBe('Press de banca con mancuernas');
+  });
 });
 
 describe('selectNutritionSummary', () => {

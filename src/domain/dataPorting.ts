@@ -4,6 +4,7 @@
 
 import type { CardioSession, LoggedSet, ProfileEntry, Settings } from '../storage';
 import { sanitizeGoalKeys } from './goal';
+import { sanitizeExerciseSwapsKey } from './exerciseSubstitutions';
 
 /** Versión actual del esquema del backup JSON. */
 export const SCHEMA_VERSION = 1 as const;
@@ -15,7 +16,10 @@ export interface KiroBackup {
   profiles: ProfileEntry[];
   sets: LoggedSet[];
   cardio: CardioSession[];
-  /** Ajustes. Incluye, opcionalmente, el objetivo de peso (goalWeightKg/goalStartWeightKg). */
+  /**
+   * Ajustes. Incluye, opcionalmente, el objetivo de peso (goalWeightKg/goalStartWeightKg)
+   * y las sustituciones de ejercicios (exerciseSwaps).
+   */
   settings: Settings;
   /** Marcas manuales de asistencia ('YYYY-MM-DD'). Opcional por compatibilidad. */
   attendance?: string[];
@@ -108,7 +112,10 @@ export function parseBackup(text: string): ParseResult {
       cardio: parsed.cardio as CardioSession[],
       // Las claves de objetivo (goalWeightKg/goalStartWeightKg) son opcionales:
       // se sanean solo si vienen; los backups antiguos quedan idénticos.
-      settings: sanitizeGoalKeys(parsed.settings) as unknown as Settings,
+      // Igual con las sustituciones de ejercicios (exerciseSwaps): opcional.
+      settings: sanitizeExerciseSwapsKey(
+        sanitizeGoalKeys(parsed.settings),
+      ) as unknown as Settings,
       attendance,
     },
   };

@@ -6,6 +6,9 @@ export type {
   CardioSession,
   Settings,
   ReminderSettings,
+  ExerciseSwap,
+  ExerciseSwaps,
+  ExerciseSwapScope,
 } from './types';
 export { DEFAULT_SETTINGS, DEFAULT_REMINDERS } from './types';
 

@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { __resetBackendForTests } from '../db';
 import { addEntry, deleteEntry, getAllEntries, updateEntry } from '../profileStore';
 import { readGoal } from '../../domain/goal';
+import { readExerciseSwaps } from '../../domain/exerciseSubstitutions';
 import { parseBackup, serializeBackup } from '../../domain/dataPorting';
 import { addSet, getAllSets } from '../workoutLogStore';
 import { addCardioSession, getAllCardioSessions } from '../cardioStore';
@@ -221,6 +222,57 @@ describe('objetivo de peso y mediciones editadas en el backup', () => {
     localStorage.clear();
     await importReplace(parseOk(serializeBackup(exported)));
     expect(await getAllEntries()).toEqual(exported.profiles);
+  });
+});
+
+describe('sustituciones de ejercicios en el backup', () => {
+  const SWAPS = {
+    'f1-sup-a::bench_press': { toKey: 'db_bench_press', scope: 'fijo' as const, date: '2024-06-10' },
+  };
+
+  it('round-trip con sustituciones: export → wipe → importReplace las conserva', async () => {
+    await seed();
+    await saveSettings({ ...DEFAULT_SETTINGS, exerciseSwaps: SWAPS });
+    const first = await exportAll();
+    expect(readExerciseSwaps(first.settings)).toEqual(SWAPS);
+
+    __resetBackendForTests();
+    localStorage.clear();
+    await importReplace(parseOk(serializeBackup(first)));
+
+    expect(readExerciseSwaps(await getSettings())).toEqual(SWAPS);
+    const second = await exportAll();
+    expect(second.settings).toEqual(first.settings);
+  });
+
+  it('backup antiguo sin exerciseSwaps importa bien y no hay sustituciones', async () => {
+    await seed();
+    const legacy = JSON.parse(serializeBackup(await exportAll()));
+    delete legacy.settings.exerciseSwaps;
+
+    __resetBackendForTests();
+    localStorage.clear();
+    await importReplace(parseOk(JSON.stringify(legacy)));
+
+    const settings = await getSettings();
+    expect('exerciseSwaps' in settings).toBe(false);
+    expect(readExerciseSwaps(settings)).toEqual({});
+    expect(await getAllSets()).toHaveLength(1);
+  });
+
+  it('exerciseSwaps corrupto no rechaza el archivo y queda vacío', async () => {
+    await seed();
+    const backup = JSON.parse(serializeBackup(await exportAll()));
+    backup.settings.exerciseSwaps = {
+      x: 5,
+      'f1-sup-a::bench_press': { toKey: 'nope', scope: 'hoy', date: 'bad' },
+    };
+    const result = parseBackup(JSON.stringify(backup));
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.backup.settings.exerciseSwaps).toEqual({});
+    await importReplace(result.backup);
+    expect(readExerciseSwaps(await getSettings())).toEqual({});
   });
 });
 

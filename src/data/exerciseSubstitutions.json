@@ -1,0 +1,677 @@
+{
+  "version": 1,
+  "groups": [
+    {
+      "id": "empuje_horizontal",
+      "name": "Empuje horizontal de pecho",
+      "primaryMuscles": [
+        "chest",
+        "triceps",
+        "shoulders"
+      ],
+      "exercises": [
+        {
+          "key": "bench_press",
+          "name": "Press banca con barra",
+          "freeExerciseDbId": "Barbell_Bench_Press_-_Medium_Grip",
+          "equipment": "barra"
+        },
+        {
+          "key": "incline_bench",
+          "name": "Press banca inclinado con barra",
+          "freeExerciseDbId": "Barbell_Incline_Bench_Press_-_Medium_Grip",
+          "equipment": "barra"
+        },
+        {
+          "key": "db_bench_press",
+          "name": "Press de banca con mancuernas",
+          "freeExerciseDbId": "Dumbbell_Bench_Press",
+          "equipment": "mancuernas"
+        },
+        {
+          "key": "incline_db_press",
+          "name": "Press inclinado con mancuernas",
+          "freeExerciseDbId": "Incline_Dumbbell_Press",
+          "equipment": "mancuernas"
+        },
+        {
+          "key": "machine_chest_press",
+          "name": "Press de pecho en máquina",
+          "freeExerciseDbId": "Leverage_Chest_Press",
+          "equipment": "máquina"
+        },
+        {
+          "key": "smith_bench_press",
+          "name": "Press banca en multipower",
+          "freeExerciseDbId": "Smith_Machine_Bench_Press",
+          "equipment": "multipower"
+        },
+        {
+          "key": "push_up",
+          "name": "Flexiones",
+          "freeExerciseDbId": "Pushups",
+          "equipment": "peso corporal",
+          "difficulty": "principiante",
+          "notes": "Sin material: apoya las rodillas si te cuesta."
+        },
+        {
+          "key": "chest_dips",
+          "name": "Fondos en paralelas (pecho)",
+          "freeExerciseDbId": "Dips_-_Chest_Version",
+          "equipment": "peso corporal",
+          "difficulty": "intermedio"
+        },
+        {
+          "key": "cable_crossover",
+          "name": "Cruce de poleas",
+          "freeExerciseDbId": "Cable_Crossover",
+          "equipment": "polea"
+        }
+      ]
+    },
+    {
+      "id": "tiron_horizontal",
+      "name": "Tirón horizontal",
+      "primaryMuscles": [
+        "back",
+        "biceps"
+      ],
+      "exercises": [
+        {
+          "key": "barbell_row",
+          "name": "Remo con barra",
+          "freeExerciseDbId": "Bent_Over_Barbell_Row",
+          "equipment": "barra"
+        },
+        {
+          "key": "db_row",
+          "name": "Remo con mancuernas",
+          "freeExerciseDbId": "Bent_Over_Two-Dumbbell_Row",
+          "equipment": "mancuernas"
+        },
+        {
+          "key": "seated_cable_row",
+          "name": "Remo sentado en polea",
+          "freeExerciseDbId": "Seated_Cable_Rows",
+          "equipment": "polea"
+        },
+        {
+          "key": "one_arm_db_row",
+          "name": "Remo a una mano con mancuerna",
+          "freeExerciseDbId": "One-Arm_Dumbbell_Row",
+          "equipment": "mancuernas + banco"
+        },
+        {
+          "key": "tbar_row",
+          "name": "Remo en barra T",
+          "freeExerciseDbId": "T-Bar_Row_with_Handle",
+          "equipment": "barra"
+        },
+        {
+          "key": "machine_row",
+          "name": "Remo en máquina",
+          "freeExerciseDbId": "Leverage_Iso_Row",
+          "equipment": "máquina"
+        },
+        {
+          "key": "inverted_row",
+          "name": "Remo invertido",
+          "freeExerciseDbId": "Inverted_Row",
+          "equipment": "peso corporal",
+          "difficulty": "intermedio",
+          "notes": "Sirve una barra baja o un multipower."
+        }
+      ]
+    },
+    {
+      "id": "tiron_vertical",
+      "name": "Tirón vertical",
+      "primaryMuscles": [
+        "back",
+        "biceps"
+      ],
+      "exercises": [
+        {
+          "key": "close_pulldown",
+          "name": "Jalón al pecho agarre cerrado",
+          "freeExerciseDbId": "Close-Grip_Front_Lat_Pulldown",
+          "equipment": "polea"
+        },
+        {
+          "key": "wide_pulldown",
+          "name": "Jalón al pecho agarre abierto",
+          "freeExerciseDbId": "Wide-Grip_Lat_Pulldown",
+          "equipment": "polea"
+        },
+        {
+          "key": "vbar_pulldown",
+          "name": "Jalón con agarre en V",
+          "freeExerciseDbId": "V-Bar_Pulldown",
+          "equipment": "polea"
+        },
+        {
+          "key": "underhand_pulldown",
+          "name": "Jalón con agarre supino",
+          "freeExerciseDbId": "Underhand_Cable_Pulldowns",
+          "equipment": "polea"
+        },
+        {
+          "key": "chin_up",
+          "name": "Dominadas supinas",
+          "freeExerciseDbId": "Chin-Up",
+          "equipment": "peso corporal",
+          "difficulty": "intermedio"
+        },
+        {
+          "key": "pull_up",
+          "name": "Dominadas",
+          "freeExerciseDbId": "Pullups",
+          "equipment": "peso corporal",
+          "difficulty": "avanzado"
+        },
+        {
+          "key": "band_pull_up",
+          "name": "Dominadas asistidas con banda",
+          "freeExerciseDbId": "Band_Assisted_Pull-Up",
+          "equipment": "banda elástica",
+          "difficulty": "principiante"
+        }
+      ]
+    },
+    {
+      "id": "empuje_vertical",
+      "name": "Empuje vertical de hombro",
+      "primaryMuscles": [
+        "shoulders",
+        "triceps"
+      ],
+      "exercises": [
+        {
+          "key": "arnold_press",
+          "name": "Press hombro (Arnold) con mancuernas",
+          "freeExerciseDbId": "Arnold_Dumbbell_Press",
+          "equipment": "mancuernas"
+        },
+        {
+          "key": "db_shoulder_press",
+          "name": "Press de hombro con mancuernas",
+          "freeExerciseDbId": "Dumbbell_Shoulder_Press",
+          "equipment": "mancuernas"
+        },
+        {
+          "key": "seated_military_press",
+          "name": "Press militar sentado con barra",
+          "freeExerciseDbId": "Seated_Barbell_Military_Press",
+          "equipment": "barra"
+        },
+        {
+          "key": "machine_shoulder_press",
+          "name": "Press de hombro en máquina",
+          "freeExerciseDbId": "Machine_Shoulder_Military_Press",
+          "equipment": "máquina"
+        },
+        {
+          "key": "cable_shoulder_press",
+          "name": "Press de hombro alterno en polea",
+          "freeExerciseDbId": "Alternating_Cable_Shoulder_Press",
+          "equipment": "polea"
+        },
+        {
+          "key": "handstand_push_up",
+          "name": "Flexiones en pino",
+          "freeExerciseDbId": "Handstand_Push-Ups",
+          "equipment": "peso corporal",
+          "difficulty": "avanzado"
+        }
+      ]
+    },
+    {
+      "id": "hombro_lateral_posterior",
+      "name": "Hombro lateral / posterior",
+      "primaryMuscles": [
+        "shoulders"
+      ],
+      "exercises": [
+        {
+          "key": "lateral_raise",
+          "name": "Elevaciones laterales",
+          "freeExerciseDbId": "Alternating_Deltoid_Raise",
+          "equipment": "mancuernas"
+        },
+        {
+          "key": "rear_delt_fly",
+          "name": "Aperturas posteriores con banda",
+          "freeExerciseDbId": "Back_Flyes_-_With_Bands",
+          "equipment": "banda elástica"
+        },
+        {
+          "key": "side_lateral_raise",
+          "name": "Elevación lateral con mancuernas",
+          "freeExerciseDbId": "Side_Lateral_Raise",
+          "equipment": "mancuernas"
+        },
+        {
+          "key": "cable_lateral_raise",
+          "name": "Elevación lateral en polea",
+          "freeExerciseDbId": "Cable_Seated_Lateral_Raise",
+          "equipment": "polea"
+        },
+        {
+          "key": "reverse_db_fly",
+          "name": "Pájaros con mancuernas",
+          "freeExerciseDbId": "Reverse_Flyes",
+          "equipment": "mancuernas"
+        },
+        {
+          "key": "face_pull",
+          "name": "Face pull en polea",
+          "freeExerciseDbId": "Face_Pull",
+          "equipment": "polea"
+        },
+        {
+          "key": "reverse_machine_fly",
+          "name": "Contractora inversa (deltoide posterior)",
+          "freeExerciseDbId": "Reverse_Machine_Flyes",
+          "equipment": "máquina"
+        },
+        {
+          "key": "seated_rear_delt_raise",
+          "name": "Pájaros sentado",
+          "freeExerciseDbId": "Seated_Bent-Over_Rear_Delt_Raise",
+          "equipment": "mancuernas + banco"
+        }
+      ]
+    },
+    {
+      "id": "dominante_rodilla",
+      "name": "Sentadilla / dominante de rodilla",
+      "primaryMuscles": [
+        "quads",
+        "glutes"
+      ],
+      "exercises": [
+        {
+          "key": "back_squat",
+          "name": "Sentadilla con barra",
+          "freeExerciseDbId": "Barbell_Squat",
+          "equipment": "barra"
+        },
+        {
+          "key": "leg_press",
+          "name": "Prensa de piernas",
+          "freeExerciseDbId": "Leg_Press",
+          "equipment": "máquina"
+        },
+        {
+          "key": "barbell_lunge",
+          "name": "Zancadas con barra",
+          "freeExerciseDbId": "Barbell_Lunge",
+          "equipment": "barra"
+        },
+        {
+          "key": "goblet_squat",
+          "name": "Sentadilla goblet",
+          "freeExerciseDbId": "Goblet_Squat",
+          "equipment": "mancuernas"
+        },
+        {
+          "key": "db_lunge",
+          "name": "Zancadas con mancuernas",
+          "freeExerciseDbId": "Dumbbell_Lunges",
+          "equipment": "mancuernas"
+        },
+        {
+          "key": "split_squat",
+          "name": "Sentadilla búlgara con mancuernas",
+          "freeExerciseDbId": "Split_Squat_with_Dumbbells",
+          "equipment": "mancuernas + banco",
+          "difficulty": "intermedio"
+        },
+        {
+          "key": "hack_squat",
+          "name": "Sentadilla hack",
+          "freeExerciseDbId": "Hack_Squat",
+          "equipment": "máquina"
+        },
+        {
+          "key": "smith_squat",
+          "name": "Sentadilla en multipower",
+          "freeExerciseDbId": "Smith_Machine_Squat",
+          "equipment": "multipower"
+        },
+        {
+          "key": "db_step_up",
+          "name": "Subidas al banco con mancuernas",
+          "freeExerciseDbId": "Dumbbell_Step_Ups",
+          "equipment": "banco"
+        },
+        {
+          "key": "bodyweight_squat",
+          "name": "Sentadilla sin peso",
+          "freeExerciseDbId": "Bodyweight_Squat",
+          "equipment": "peso corporal",
+          "difficulty": "principiante"
+        },
+        {
+          "key": "walking_lunge",
+          "name": "Zancadas caminando",
+          "freeExerciseDbId": "Bodyweight_Walking_Lunge",
+          "equipment": "peso corporal"
+        },
+        {
+          "key": "leg_extension",
+          "name": "Extensión de cuádriceps",
+          "freeExerciseDbId": "Leg_Extensions",
+          "equipment": "máquina"
+        }
+      ]
+    },
+    {
+      "id": "bisagra_cadera",
+      "name": "Bisagra de cadera / glúteo",
+      "primaryMuscles": [
+        "glutes",
+        "hamstrings"
+      ],
+      "exercises": [
+        {
+          "key": "hip_thrust",
+          "name": "Empuje de cadera con barra",
+          "freeExerciseDbId": "Barbell_Hip_Thrust",
+          "equipment": "barra + banco"
+        },
+        {
+          "key": "glute_bridge",
+          "name": "Puente de glúteo con barra",
+          "freeExerciseDbId": "Barbell_Glute_Bridge",
+          "equipment": "barra"
+        },
+        {
+          "key": "glute_kickback",
+          "name": "Patada de glúteo",
+          "freeExerciseDbId": "Glute_Kickback",
+          "equipment": "peso corporal"
+        },
+        {
+          "key": "romanian_deadlift",
+          "name": "Peso muerto rumano",
+          "freeExerciseDbId": "Romanian_Deadlift",
+          "equipment": "barra"
+        },
+        {
+          "key": "pull_through",
+          "name": "Pull through en polea",
+          "freeExerciseDbId": "Pull_Through",
+          "equipment": "polea"
+        },
+        {
+          "key": "single_leg_bridge",
+          "name": "Puente de glúteo a una pierna",
+          "freeExerciseDbId": "Single_Leg_Glute_Bridge",
+          "equipment": "peso corporal"
+        },
+        {
+          "key": "floor_glute_bridge",
+          "name": "Puente de glúteo en el suelo",
+          "freeExerciseDbId": "Butt_Lift_Bridge",
+          "equipment": "peso corporal",
+          "difficulty": "principiante"
+        },
+        {
+          "key": "band_hip_lift",
+          "name": "Elevación de cadera con banda",
+          "freeExerciseDbId": "Hip_Lift_with_Band",
+          "equipment": "banda elástica"
+        }
+      ]
+    },
+    {
+      "id": "isquios",
+      "name": "Isquios",
+      "primaryMuscles": [
+        "hamstrings",
+        "glutes"
+      ],
+      "exercises": [
+        {
+          "key": "lying_leg_curl",
+          "name": "Curl femoral tumbado",
+          "freeExerciseDbId": "Lying_Leg_Curls",
+          "equipment": "máquina"
+        },
+        {
+          "key": "seated_leg_curl",
+          "name": "Curl femoral sentado",
+          "freeExerciseDbId": "Seated_Leg_Curl",
+          "equipment": "máquina"
+        },
+        {
+          "key": "stiff_leg_db_deadlift",
+          "name": "Peso muerto piernas rígidas con mancuernas",
+          "freeExerciseDbId": "Stiff-Legged_Dumbbell_Deadlift",
+          "equipment": "mancuernas"
+        },
+        {
+          "key": "ball_leg_curl",
+          "name": "Curl femoral con fitball",
+          "freeExerciseDbId": "Ball_Leg_Curl",
+          "equipment": "fitball",
+          "difficulty": "intermedio"
+        },
+        {
+          "key": "glute_ham_raise",
+          "name": "Glute-ham raise",
+          "freeExerciseDbId": "Glute_Ham_Raise",
+          "equipment": "máquina"
+        },
+        {
+          "key": "nordic_curl",
+          "name": "Curl nórdico",
+          "freeExerciseDbId": "Natural_Glute_Ham_Raise",
+          "equipment": "peso corporal",
+          "difficulty": "avanzado"
+        }
+      ]
+    },
+    {
+      "id": "gemelos",
+      "name": "Gemelos",
+      "primaryMuscles": [
+        "calves"
+      ],
+      "exercises": [
+        {
+          "key": "seated_calf",
+          "name": "Elevación de gemelos sentado",
+          "freeExerciseDbId": "Barbell_Seated_Calf_Raise",
+          "equipment": "barra + banco"
+        },
+        {
+          "key": "calf_press",
+          "name": "Elevación de gemelos en prensa",
+          "freeExerciseDbId": "Calf_Press",
+          "equipment": "máquina"
+        },
+        {
+          "key": "standing_calf_raise",
+          "name": "Elevación de gemelos de pie en máquina",
+          "freeExerciseDbId": "Standing_Calf_Raises",
+          "equipment": "máquina"
+        },
+        {
+          "key": "seated_calf_machine",
+          "name": "Gemelos en máquina sentado",
+          "freeExerciseDbId": "Seated_Calf_Raise",
+          "equipment": "máquina"
+        },
+        {
+          "key": "smith_calf_raise",
+          "name": "Gemelos en multipower",
+          "freeExerciseDbId": "Smith_Machine_Calf_Raise",
+          "equipment": "multipower"
+        },
+        {
+          "key": "db_calf_raise",
+          "name": "Gemelos de pie con mancuernas",
+          "freeExerciseDbId": "Standing_Dumbbell_Calf_Raise",
+          "equipment": "mancuernas"
+        },
+        {
+          "key": "step_calf_raise",
+          "name": "Gemelos en escalón",
+          "freeExerciseDbId": "Calf_Raise_On_A_Dumbbell",
+          "equipment": "peso corporal"
+        },
+        {
+          "key": "single_leg_seated_calf",
+          "name": "Gemelo sentado a una pierna con mancuerna",
+          "freeExerciseDbId": "Dumbbell_Seated_One-Leg_Calf_Raise",
+          "equipment": "mancuernas + banco"
+        }
+      ]
+    },
+    {
+      "id": "biceps",
+      "name": "Bíceps",
+      "primaryMuscles": [
+        "biceps"
+      ],
+      "exercises": [
+        {
+          "key": "barbell_curl",
+          "name": "Curl con barra",
+          "freeExerciseDbId": "Barbell_Curl",
+          "equipment": "barra"
+        },
+        {
+          "key": "hammer_curl",
+          "name": "Curl martillo alterno",
+          "freeExerciseDbId": "Alternate_Hammer_Curl",
+          "equipment": "mancuernas"
+        },
+        {
+          "key": "db_curl",
+          "name": "Curl con mancuernas",
+          "freeExerciseDbId": "Dumbbell_Bicep_Curl",
+          "equipment": "mancuernas"
+        },
+        {
+          "key": "ez_curl",
+          "name": "Curl con barra Z",
+          "freeExerciseDbId": "EZ-Bar_Curl",
+          "equipment": "barra Z"
+        },
+        {
+          "key": "hammer_curl_db",
+          "name": "Curl martillo con mancuernas",
+          "freeExerciseDbId": "Hammer_Curls",
+          "equipment": "mancuernas"
+        },
+        {
+          "key": "rope_hammer_curl",
+          "name": "Curl martillo en polea con cuerda",
+          "freeExerciseDbId": "Cable_Hammer_Curls_-_Rope_Attachment",
+          "equipment": "polea"
+        },
+        {
+          "key": "preacher_curl",
+          "name": "Curl predicador en polea",
+          "freeExerciseDbId": "Cable_Preacher_Curl",
+          "equipment": "polea"
+        },
+        {
+          "key": "incline_curl",
+          "name": "Curl inclinado con mancuernas",
+          "freeExerciseDbId": "Alternate_Incline_Dumbbell_Curl",
+          "equipment": "mancuernas + banco"
+        },
+        {
+          "key": "concentration_curl",
+          "name": "Curl concentrado",
+          "freeExerciseDbId": "Concentration_Curls",
+          "equipment": "mancuernas"
+        }
+      ]
+    },
+    {
+      "id": "triceps",
+      "name": "Tríceps",
+      "primaryMuscles": [
+        "triceps"
+      ],
+      "exercises": [
+        {
+          "key": "cable_tricep_ext",
+          "name": "Extensión de tríceps en polea",
+          "freeExerciseDbId": "Cable_Incline_Triceps_Extension",
+          "equipment": "polea"
+        },
+        {
+          "key": "bench_dips",
+          "name": "Fondos en banco",
+          "freeExerciseDbId": "Bench_Dips",
+          "equipment": "banco"
+        },
+        {
+          "key": "triceps_pushdown",
+          "name": "Jalón de tríceps en polea",
+          "freeExerciseDbId": "Triceps_Pushdown",
+          "equipment": "polea"
+        },
+        {
+          "key": "rope_pushdown",
+          "name": "Jalón de tríceps con cuerda",
+          "freeExerciseDbId": "Triceps_Pushdown_-_Rope_Attachment",
+          "equipment": "polea"
+        },
+        {
+          "key": "close_grip_bench",
+          "name": "Press banca agarre cerrado",
+          "freeExerciseDbId": "Close-Grip_Barbell_Bench_Press",
+          "equipment": "barra"
+        },
+        {
+          "key": "triceps_dips",
+          "name": "Fondos en paralelas (tríceps)",
+          "freeExerciseDbId": "Dips_-_Triceps_Version",
+          "equipment": "peso corporal",
+          "difficulty": "intermedio"
+        },
+        {
+          "key": "ez_skullcrusher",
+          "name": "Press francés con barra Z",
+          "freeExerciseDbId": "EZ-Bar_Skullcrusher",
+          "equipment": "barra Z"
+        },
+        {
+          "key": "overhead_db_ext",
+          "name": "Extensión de tríceps sobre la cabeza",
+          "freeExerciseDbId": "Standing_Dumbbell_Triceps_Extension",
+          "equipment": "mancuernas"
+        },
+        {
+          "key": "db_kickback",
+          "name": "Patada de tríceps con mancuerna",
+          "freeExerciseDbId": "Tricep_Dumbbell_Kickback",
+          "equipment": "mancuernas"
+        },
+        {
+          "key": "close_push_up",
+          "name": "Flexiones cerradas (diamante)",
+          "freeExerciseDbId": "Push-Ups_-_Close_Triceps_Position",
+          "equipment": "peso corporal"
+        },
+        {
+          "key": "body_tricep_press",
+          "name": "Extensión de tríceps con peso corporal",
+          "freeExerciseDbId": "Body_Tricep_Press",
+          "equipment": "peso corporal"
+        }
+      ]
+    }
+  ],
+  "slotGroupOverrides": {
+    "f1-inf-a::glute_bridge": "isquios",
+    "f2-inf-a::glute_bridge": "isquios"
+  }
+}

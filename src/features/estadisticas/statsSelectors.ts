@@ -10,6 +10,7 @@ import {
 } from '../../domain/nutrition';
 import { paceSecPerKm, sessionDurationSec, speedKmH } from '../../domain/cardio';
 import { routine } from '../../domain/routine';
+import { SUBSTITUTION_DB } from '../../domain/exerciseSubstitutions';
 import { compareProfileEntries } from '../../domain/profileHistory';
 
 /** Rango temporal del selector Semana/Mes/Todo. */
@@ -212,6 +213,10 @@ export function selectStrengthStats(
   const nameById = new Map<string, string>();
   for (const day of routine) {
     for (const ex of day.exercises) nameById.set(ex.id, ex.name);
+  }
+  // Sustitutos (Lista de Sustitución): nombre desde la base local.
+  for (const g of SUBSTITUTION_DB.groups) {
+    for (const e of g.exercises) if (!nameById.has(e.key)) nameById.set(e.key, e.name);
   }
 
   // Progresión por ejercicio: mejor 1RM estimado (y mejor peso absoluto).

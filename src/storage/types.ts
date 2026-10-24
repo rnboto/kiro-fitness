@@ -60,6 +60,19 @@ export interface ReminderSettings {
   bioimpedance: { enabled: boolean; intervalWeeks: number };
 }
 
+/** Alcance de una sustitución de ejercicio. */
+export type ExerciseSwapScope = 'hoy' | 'fijo';
+
+/** Sustitución guardada para un hueco de la rutina. */
+export interface ExerciseSwap {
+  toKey: string; // key del ejercicio sustituto en la base de sustituciones
+  scope: ExerciseSwapScope;
+  date: string; // 'YYYY-MM-DD' local del día en que se eligió (relevante para 'hoy')
+}
+
+/** Clave `${dayId}::${originalExerciseId}` → sustitución. */
+export type ExerciseSwaps = Record<string, ExerciseSwap>;
+
 /** Ajustes de la app (singleton). */
 export interface Settings {
   activityFactor: number; // default 1.375
@@ -81,6 +94,12 @@ export interface Settings {
   goalWeightKg?: number | null;
   /** Peso actual en el momento de fijar el objetivo (kg). Opcional; null/ausente = desconocido. */
   goalStartWeightKg?: number | null;
+  /**
+   * Sustituciones de ejercicios (Gimnasio › Musculación). Opcional por
+   * compatibilidad: los datos antiguos no lo tienen y NO está en DEFAULT_SETTINGS;
+   * se lee siempre con `readExerciseSwaps` (lectura defensiva, default {}).
+   */
+  exerciseSwaps?: ExerciseSwaps;
 }
 
 /** Recordatorios por defecto (design §5, literales exactos). */
