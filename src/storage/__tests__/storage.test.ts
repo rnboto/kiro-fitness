@@ -1,6 +1,14 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { __resetBackendForTests } from '../db';
-import { addEntry, getAllEntries, getLatestProfile, type NewProfileEntry } from '../profileStore';
+import {
+  addEntry,
+  deleteEntry,
+  getAllEntries,
+  getLatestProfile,
+  updateEntry,
+  type NewProfileEntry,
+} from '../profileStore';
+import { readGoal } from '../../domain/goal';
 import { addSet, getAllSets, getLastSet } from '../workoutLogStore';
 import { getSettings, saveSettings } from '../settingsStore';
 import { DEFAULT_SETTINGS } from '../types';
@@ -49,6 +57,83 @@ describe('profileStore', () => {
     const second = await addEntry({ ...baseEntry, date: sameDate, weightKg: 82 });
     const got = await getLatestProfile();
     expect(got?.id).toBe(second.id);
+  });
+
+  it('empate de día con formatos mixtos: gana el id mayor', async () => {
+    await addEntry({ ...baseEntry, date: '2026-10-17T08:00:00.000Z', weightKg: 72 });
+    const second = await addEntry({ ...baseEntry, date: '2026-10-17', weightKg: 75 });
+    expect((await getLatestProfile())?.id).toBe(second.id);
+    const all = await getAllEntries();
+    expect(all[all.length - 1].id).toBe(second.id);
+  });
+
+  describe('updateEntry', () => {
+    it('cambia solo la entrada objetivo, conserva su id y no toca las demás', async () => {
+      const a = await addEntry({ ...baseEntry, weightKg: 83 });
+      const b = await addEntry({ ...baseEntry, date: '2024-02-01', weightKg: 81 });
+      const c = await addEntry({ ...baseEntry, date: '2024-03-01', weightKg: 79 });
+      const before = await getAllEntries();
+
+      const saved = await updateEntry(b.id, { weightKg: 80.5, bodyFatPct: 18 });
+      expect(saved).toEqual({ ...b, weightKg: 80.5, bodyFatPct: 18 });
+
+      const after = await getAllEntries();
+      expect(after).toHaveLength(3);
+      expect(after.find((e) => e.id === b.id)?.weightKg).toBe(80.5);
+      expect(after.find((e) => e.id === a.id)).toEqual(before.find((e) => e.id === a.id));
+      expect(after.find((e) => e.id === c.id)).toEqual(before.find((e) => e.id === c.id));
+    });
+
+    it('devuelve null si el id no existe y no crea nada', async () => {
+      await addEntry(baseEntry);
+      expect(await updateEntry(999, { weightKg: 70 })).toBeNull();
+      expect(await getAllEntries()).toHaveLength(1);
+    });
+
+    it('ignora un id dentro del patch', async () => {
+      const a = await addEntry(baseEntry);
+      const saved = await updateEntry(a.id, { weightKg: 70, id: 999 } as never);
+      expect(saved?.id).toBe(a.id);
+      expect((await getAllEntries()).map((e) => e.id)).toEqual([a.id]);
+    });
+
+    it('cambiar la fecha reordena el histórico', async () => {
+      const a = await addEntry({ ...baseEntry, date: '2024-01-01' });
+      const b = await addEntry({ ...baseEntry, date: '2024-02-01' });
+      await updateEntry(a.id, { date: '2024-05-01' });
+      expect((await getLatestProfile())?.id).toBe(a.id);
+      expect((await getAllEntries()).map((e) => e.id)).toEqual([b.id, a.id]);
+    });
+  });
+
+  describe('deleteEntry', () => {
+    it('borra solo la entrada indicada y devuelve true', async () => {
+      const a = await addEntry(baseEntry);
+      const b = await addEntry({ ...baseEntry, date: '2024-02-01' });
+      expect(await deleteEntry(a.id)).toBe(true);
+      expect((await getAllEntries()).map((e) => e.id)).toEqual([b.id]);
+    });
+
+    it('nunca borra la última medición restante', async () => {
+      const a = await addEntry(baseEntry);
+      expect(await deleteEntry(a.id)).toBe(false);
+      expect(await getAllEntries()).toHaveLength(1);
+    });
+
+    it('id inexistente → false', async () => {
+      await addEntry(baseEntry);
+      await addEntry({ ...baseEntry, date: '2024-02-01' });
+      expect(await deleteEntry(999)).toBe(false);
+      expect(await getAllEntries()).toHaveLength(2);
+    });
+
+    it('tras borrar, un addEntry nuevo recibe un id mayor que todos los anteriores', async () => {
+      await addEntry(baseEntry);
+      const b = await addEntry({ ...baseEntry, date: '2024-02-01' });
+      await deleteEntry(b.id);
+      const c = await addEntry({ ...baseEntry, date: '2024-03-01' });
+      expect(c.id).toBeGreaterThan(b.id);
+    });
   });
 });
 
@@ -102,5 +187,31 @@ describe('settingsStore', () => {
     });
     const got = await getSettings();
     expect(got.selectedPlates?.post).toBe('post_skyr_muesli_frutos_rojos');
+  });
+
+  it('los campos de objetivo son opcionales y no están en los defaults', async () => {
+    expect(DEFAULT_SETTINGS.goalWeightKg).toBeUndefined();
+    expect(DEFAULT_SETTINGS.goalStartWeightKg).toBeUndefined();
+    expect(readGoal(await getSettings())).toEqual({ goalWeightKg: null, goalStartWeightKg: null });
+  });
+
+  it('ajustes antiguos sin objetivo cargan correctamente', async () => {
+    const { routineWeekPhase: _p, ...legacy } = DEFAULT_SETTINGS;
+    await saveSettings(legacy as never);
+    const got = await getSettings();
+    expect(got.activityFactor).toBe(DEFAULT_SETTINGS.activityFactor);
+    expect(readGoal(got)).toEqual({ goalWeightKg: null, goalStartWeightKg: null });
+  });
+
+  it('el objetivo se persiste y se puede quitar con null', async () => {
+    await saveSettings({ ...DEFAULT_SETTINGS, goalWeightKg: 84, goalStartWeightKg: 90 });
+    expect(readGoal(await getSettings())).toEqual({ goalWeightKg: 84, goalStartWeightKg: 90 });
+    await saveSettings({ ...DEFAULT_SETTINGS, goalWeightKg: null, goalStartWeightKg: null });
+    expect(readGoal(await getSettings())).toEqual({ goalWeightKg: null, goalStartWeightKg: null });
+  });
+
+  it('valores corruptos de objetivo se leen como null', async () => {
+    await saveSettings({ ...DEFAULT_SETTINGS, goalWeightKg: 'x', goalStartWeightKg: 90 } as never);
+    expect(readGoal(await getSettings())).toEqual({ goalWeightKg: null, goalStartWeightKg: null });
   });
 });

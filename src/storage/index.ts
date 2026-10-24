@@ -15,7 +15,10 @@ export {
   addEntry,
   getAllEntries,
   getLatestProfile,
+  updateEntry,
+  deleteEntry,
   type NewProfileEntry,
+  type ProfileEntryPatch,
 } from './profileStore';
 
 export {

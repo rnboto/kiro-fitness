@@ -77,6 +77,10 @@ export interface Settings {
    * DEFAULT_SETTINGS; sin valor (o con un id desconocido) se usa el primer plato.
    */
   selectedPlates?: Partial<Record<'pre' | 'post' | 'almuerzo' | 'cena', string>>;
+  /** Peso objetivo (kg). Opcional por compatibilidad; null/ausente = sin objetivo. NO está en DEFAULT_SETTINGS. */
+  goalWeightKg?: number | null;
+  /** Peso actual en el momento de fijar el objetivo (kg). Opcional; null/ausente = desconocido. */
+  goalStartWeightKg?: number | null;
 }
 
 /** Recordatorios por defecto (design §5, literales exactos). */

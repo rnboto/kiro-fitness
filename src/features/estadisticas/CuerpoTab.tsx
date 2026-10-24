@@ -1,22 +1,28 @@
-// Pestaña Cuerpo: hogar único del progreso corporal. Incluye el formulario para
-// registrar nuevas mediciones y, debajo, las series de peso, % de grasa y MME del
-// histórico Evolt, filtradas por el rango seleccionado (recharts). Al guardar una
-// medición, el histórico del contexto se actualiza y las gráficas se refrescan.
+// Pestaña Cuerpo: hogar único del progreso corporal. Incluye la tarjeta de objetivo
+// de peso, el formulario para registrar nuevas mediciones, las series de peso,
+// % de grasa y MME del histórico Evolt (filtradas por el rango, recharts; el peso
+// muestra el objetivo como línea de referencia) y el historial de mediciones con
+// editar/borrar. Al cambiar el histórico, el contexto se actualiza y todo se refresca.
 
 import { useMemo, useState } from 'react';
 import {
   CartesianGrid,
   Line,
   LineChart,
+  ReferenceLine,
   ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis,
 } from 'recharts';
 import { useProfile } from '../../context/ProfileContext';
+import { useSettings } from '../../context/SettingsContext';
+import { readGoal } from '../../domain/goal';
 import MeasurementForm from './MeasurementForm';
+import MeasurementHistory from './MeasurementHistory';
 import RangeSelector from './RangeSelector';
 import { selectBodyStats, type SeriesPoint, type StatsRange } from './statsSelectors';
+import WeightGoalCard from './WeightGoalCard';
 import styles from './tabs.module.css';
 
 interface SeriesDef {
@@ -34,6 +40,8 @@ const SERIES: SeriesDef[] = [
 
 export default function CuerpoTab() {
   const { history, profile } = useProfile();
+  const { settings } = useSettings();
+  const goal = readGoal(settings);
   const [range, setRange] = useState<StatsRange>('todo');
 
   const stats = useMemo(() => selectBodyStats(history, range), [history, range]);
@@ -42,6 +50,8 @@ export default function CuerpoTab() {
 
   return (
     <div className={styles.tab}>
+      <WeightGoalCard />
+
       <section className={styles.formSection}>
         <h2 className={styles.tabTitle}>Registrar medición</h2>
         <MeasurementForm
@@ -94,6 +104,21 @@ export default function CuerpoTab() {
                         color: '#eef3f8',
                       }}
                     />
+                    {s.key === 'weight' && goal.goalWeightKg !== null && (
+                      <ReferenceLine
+                        y={goal.goalWeightKg}
+                        stroke="#28e0a8"
+                        strokeDasharray="6 4"
+                        strokeOpacity={0.7}
+                        ifOverflow="extendDomain"
+                        label={{
+                          value: `Objetivo ${goal.goalWeightKg} kg`,
+                          position: 'insideTopRight',
+                          fill: '#9fb0c0',
+                          fontSize: 11,
+                        }}
+                      />
+                    )}
                     <Line
                       type="monotone"
                       dataKey="value"
@@ -111,6 +136,8 @@ export default function CuerpoTab() {
           );
         })
       )}
+
+      {history.length > 0 && <MeasurementHistory />}
     </div>
   );
 }

@@ -94,6 +94,19 @@ describe('helpers de fecha', () => {
   });
 });
 
+describe('selectBodyStats · empate de día', () => {
+  it('dos entradas del mismo día conservan ambos puntos, ordenados por id', () => {
+    const history = [
+      profile('2026-10-17', { id: 5, weightKg: 75 }),
+      profile('2026-10-17T08:00:00.000Z', { id: 2, weightKg: 72 }),
+      profile('2026-10-10', { id: 1, weightKg: 76 }),
+    ];
+    const stats = selectBodyStats(history, 'todo', new Date('2026-10-18T12:00:00.000Z'));
+    expect(stats.weight.map((p) => p.value)).toEqual([76, 72, 75]);
+    expect(stats.weight.map((p) => p.date)).toEqual(['2026-10-10', '2026-10-17', '2026-10-17']);
+  });
+});
+
 describe('selectBodyStats', () => {
   const history = [
     profile('2024-05-01', { weightKg: 85 }),

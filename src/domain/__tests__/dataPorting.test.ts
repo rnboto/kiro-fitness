@@ -203,3 +203,44 @@ describe('toCsv', () => {
     expect(lines).toHaveLength(1); // solo la cabecera
   });
 });
+
+describe('claves opcionales de objetivo de peso', () => {
+  const base = {
+    schemaVersion: 1,
+    exportedAt: NOW.toISOString(),
+    profiles: [],
+    sets: [],
+    cardio: [],
+  };
+
+  it('un backup v1 sin claves de objetivo importa y no las inventa', () => {
+    const result = parseBackup(JSON.stringify({ ...base, settings }));
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect('goalWeightKg' in result.backup.settings).toBe(false);
+      expect('goalStartWeightKg' in result.backup.settings).toBe(false);
+    }
+  });
+
+  it('con claves válidas las conserva', () => {
+    const result = parseBackup(
+      JSON.stringify({ ...base, settings: { ...settings, goalWeightKg: 84, goalStartWeightKg: 90 } }),
+    );
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.backup.settings.goalWeightKg).toBe(84);
+      expect(result.backup.settings.goalStartWeightKg).toBe(90);
+    }
+  });
+
+  it('con un valor corrupto no rechaza el archivo y lo deja en null', () => {
+    const result = parseBackup(
+      JSON.stringify({ ...base, settings: { ...settings, goalWeightKg: 'abc', goalStartWeightKg: 5000 } }),
+    );
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.backup.settings.goalWeightKg).toBeNull();
+      expect(result.backup.settings.goalStartWeightKg).toBeNull();
+    }
+  });
+});

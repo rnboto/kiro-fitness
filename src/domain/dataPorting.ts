@@ -3,6 +3,7 @@
 // segura (nunca lanza) y la fusión por id, además del volcado a CSV por rango.
 
 import type { CardioSession, LoggedSet, ProfileEntry, Settings } from '../storage';
+import { sanitizeGoalKeys } from './goal';
 
 /** Versión actual del esquema del backup JSON. */
 export const SCHEMA_VERSION = 1 as const;
@@ -14,6 +15,7 @@ export interface KiroBackup {
   profiles: ProfileEntry[];
   sets: LoggedSet[];
   cardio: CardioSession[];
+  /** Ajustes. Incluye, opcionalmente, el objetivo de peso (goalWeightKg/goalStartWeightKg). */
   settings: Settings;
   /** Marcas manuales de asistencia ('YYYY-MM-DD'). Opcional por compatibilidad. */
   attendance?: string[];
@@ -104,7 +106,9 @@ export function parseBackup(text: string): ParseResult {
       profiles: parsed.profiles as ProfileEntry[],
       sets: parsed.sets as LoggedSet[],
       cardio: parsed.cardio as CardioSession[],
-      settings: parsed.settings as unknown as Settings,
+      // Las claves de objetivo (goalWeightKg/goalStartWeightKg) son opcionales:
+      // se sanean solo si vienen; los backups antiguos quedan idénticos.
+      settings: sanitizeGoalKeys(parsed.settings) as unknown as Settings,
       attendance,
     },
   };
@@ -126,7 +130,7 @@ function mergeById<T extends { id: number }>(current: T[], incoming: T[]): T[] {
 /**
  * Fusiona un backup entrante con los datos actuales: añade por id lo que no
  * exista (profiles/sets/cardio) sin borrar nada. Los ajustes actuales se
- * conservan (la fusión no toca settings).
+ * conservan (la fusión no toca settings; eso incluye el objetivo de peso).
  */
 export function mergeBackup(current: BackupData, incoming: KiroBackup): BackupData {
   const attendance = Array.from(

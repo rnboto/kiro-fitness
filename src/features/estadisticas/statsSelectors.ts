@@ -10,6 +10,7 @@ import {
 } from '../../domain/nutrition';
 import { paceSecPerKm, sessionDurationSec, speedKmH } from '../../domain/cardio';
 import { routine } from '../../domain/routine';
+import { compareProfileEntries } from '../../domain/profileHistory';
 
 /** Rango temporal del selector Semana/Mes/Todo. */
 export type StatsRange = 'semana' | 'mes' | 'todo';
@@ -161,7 +162,7 @@ export function selectBodyStats(
   const entries = history
     .filter((e) => inRange(e.date, start, now))
     .slice()
-    .sort((a, b) => toDayKey(a.date).localeCompare(toDayKey(b.date)));
+    .sort(compareProfileEntries);
 
   return {
     weight: entries.map((e) => ({ date: toDayKey(e.date), value: e.weightKg })),

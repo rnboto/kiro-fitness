@@ -1,0 +1,129 @@
+.title {
+  font-size: var(--kiro-font-size-lg);
+  font-weight: 700;
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--kiro-space-3);
+}
+
+.item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--kiro-space-3);
+  background: var(--kiro-surface-2);
+  border: 1px solid var(--kiro-border);
+  border-radius: var(--kiro-radius-md);
+  padding: var(--kiro-space-3);
+}
+
+.itemHead {
+  display: flex;
+  align-items: center;
+  gap: var(--kiro-space-2);
+}
+
+.date {
+  font-weight: 700;
+}
+
+.badge {
+  font-size: var(--kiro-font-size-xs);
+  font-weight: 700;
+  color: var(--kiro-accent);
+  background: var(--kiro-accent-soft);
+  border-radius: var(--kiro-radius-pill);
+  padding: 2px var(--kiro-space-2);
+}
+
+/* Valores: 2 columnas en pantallas estrechas, 3 a partir de 400px. */
+.values {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--kiro-space-2);
+  margin: 0;
+}
+
+.values dt {
+  font-size: var(--kiro-font-size-xs);
+  color: var(--kiro-text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.values dd {
+  margin: 0;
+  font-weight: 600;
+}
+
+@media (min-width: 400px) {
+  .values {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.actions {
+  display: flex;
+  gap: var(--kiro-space-2);
+}
+
+.secondaryBtn,
+.dangerBtn {
+  min-height: 40px;
+  padding: 0 var(--kiro-space-4);
+  border-radius: var(--kiro-radius-md);
+  font-weight: 700;
+  font-size: var(--kiro-font-size-sm);
+  cursor: pointer;
+}
+
+.secondaryBtn {
+  background: var(--kiro-surface-3);
+  border: 1px solid var(--kiro-border);
+  color: var(--kiro-text);
+}
+
+.dangerBtn {
+  background: rgba(231, 76, 76, 0.12);
+  border: 1px solid rgba(231, 76, 76, 0.4);
+  color: #ff8a8a;
+}
+
+.dangerBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.secondaryBtn:focus-visible,
+.dangerBtn:focus-visible {
+  outline: 2px solid var(--kiro-accent);
+  outline-offset: 2px;
+}
+
+.hint {
+  color: var(--kiro-text-muted);
+  font-size: var(--kiro-font-size-sm);
+}
+
+.errorText {
+  color: #ff8a8a;
+  font-size: var(--kiro-font-size-sm);
+}
+
+.confirmBody {
+  display: flex;
+  flex-direction: column;
+  gap: var(--kiro-space-4);
+  color: var(--kiro-text);
+}
+
+.confirmActions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--kiro-space-2);
+}

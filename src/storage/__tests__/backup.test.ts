@@ -1,6 +1,8 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { __resetBackendForTests } from '../db';
-import { addEntry, getAllEntries } from '../profileStore';
+import { addEntry, deleteEntry, getAllEntries, updateEntry } from '../profileStore';
+import { readGoal } from '../../domain/goal';
+import { parseBackup, serializeBackup } from '../../domain/dataPorting';
 import { addSet, getAllSets } from '../workoutLogStore';
 import { addCardioSession, getAllCardioSessions } from '../cardioStore';
 import { addAttendanceMark, getAllAttendanceMarks } from '../attendanceMarkStore';
@@ -171,3 +173,59 @@ describe('round-trip export → import', () => {
     expect(added.id).toBeGreaterThan(1);
   });
 });
+
+describe('objetivo de peso y mediciones editadas en el backup', () => {
+  it('round-trip con objetivo: export → wipe → importReplace conserva el objetivo', async () => {
+    await seed();
+    await saveSettings({ ...DEFAULT_SETTINGS, goalWeightKg: 84, goalStartWeightKg: 90 });
+    const first = await exportAll();
+    expect(readGoal(first.settings)).toEqual({ goalWeightKg: 84, goalStartWeightKg: 90 });
+
+    __resetBackendForTests();
+    localStorage.clear();
+    await importReplace(parseOk(serializeBackup(first)));
+
+    expect(readGoal(await getSettings())).toEqual({ goalWeightKg: 84, goalStartWeightKg: 90 });
+    const second = await exportAll();
+    expect(second.settings).toEqual(first.settings);
+  });
+
+  it('backup antiguo sin claves de objetivo importa bien y no hay objetivo', async () => {
+    await seed();
+    const backup = await exportAll();
+    const legacy = JSON.parse(serializeBackup(backup));
+    delete legacy.settings.goalWeightKg;
+    delete legacy.settings.goalStartWeightKg;
+
+    __resetBackendForTests();
+    localStorage.clear();
+    await importReplace(parseOk(JSON.stringify(legacy)));
+
+    expect(readGoal(await getSettings())).toEqual({ goalWeightKg: null, goalStartWeightKg: null });
+    expect(await getAllEntries()).toHaveLength(1);
+  });
+
+  it('mediciones editadas y borradas fluyen al backup y vuelven intactas', async () => {
+    const a = await addEntry({ date: '2024-06-01', age: 30, heightCm: 178, sex: 'M', weightKg: 85, bodyFatPct: 20, mmeKg: 36 });
+    const b = await addEntry({ date: '2024-06-08', age: 30, heightCm: 178, sex: 'M', weightKg: 84, bodyFatPct: 19, mmeKg: 36 });
+    await addEntry({ date: '2024-06-15', age: 30, heightCm: 178, sex: 'M', weightKg: 83, bodyFatPct: 19, mmeKg: 36 });
+    await updateEntry(a.id, { weightKg: 86 });
+    expect(await deleteEntry(b.id)).toBe(true);
+
+    const exported = await exportAll();
+    expect(exported.profiles).toHaveLength(2);
+    expect(exported.profiles.find((p) => p.id === a.id)?.weightKg).toBe(86);
+    expect(exported.profiles.some((p) => p.id === b.id)).toBe(false);
+
+    __resetBackendForTests();
+    localStorage.clear();
+    await importReplace(parseOk(serializeBackup(exported)));
+    expect(await getAllEntries()).toEqual(exported.profiles);
+  });
+});
+
+function parseOk(text: string) {
+  const result = parseBackup(text);
+  if (!result.ok) throw new Error(result.error);
+  return result.backup;
+}
