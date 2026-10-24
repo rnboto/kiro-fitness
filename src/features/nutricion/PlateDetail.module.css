@@ -1,0 +1,85 @@
+.detail {
+  display: flex;
+  flex-direction: column;
+  gap: var(--kiro-space-2);
+}
+
+.titleRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--kiro-space-2);
+}
+
+.plateName {
+  font-size: var(--kiro-font-size-md, 1rem);
+  font-weight: 700;
+}
+
+.badge {
+  padding: 2px var(--kiro-space-2);
+  border-radius: var(--kiro-radius-pill);
+  background: var(--kiro-accent-soft);
+  border: 1px solid var(--kiro-accent);
+  color: var(--kiro-accent);
+  font-size: var(--kiro-font-size-xs);
+  font-weight: 700;
+}
+
+.description {
+  color: var(--kiro-text-muted);
+  font-size: var(--kiro-font-size-sm);
+}
+
+.items {
+  display: flex;
+  flex-direction: column;
+  gap: var(--kiro-space-2);
+}
+
+.itemButton,
+.itemFixed {
+  width: 100%;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--kiro-space-3);
+  background: var(--kiro-surface-2);
+  border: 1px solid var(--kiro-border);
+  border-radius: var(--kiro-radius-md);
+}
+
+.itemFixed {
+  border-style: dashed;
+}
+
+.itemName {
+  font-weight: 700;
+}
+
+.itemGrams {
+  color: var(--kiro-accent);
+  font-size: var(--kiro-font-size-sm);
+  font-weight: 600;
+}
+
+.tip {
+  color: var(--kiro-text-dim);
+  font-size: var(--kiro-font-size-xs);
+}
+
+.totals {
+  font-size: var(--kiro-font-size-sm);
+  font-weight: 700;
+}
+
+.target {
+  color: var(--kiro-text-muted);
+  font-size: var(--kiro-font-size-sm);
+}
+
+.rawNote {
+  color: var(--kiro-text-dim);
+  font-size: var(--kiro-font-size-xs);
+}

@@ -2,8 +2,15 @@
 // por el macro dominante, con los gramos en crudo equivalentes (design §7).
 
 import Modal from '../../components/Modal';
-import { FOODS, swapEquivalents, toCookedGrams, type Food } from '../../domain/foodDb';
-import type { MassMacro } from '../../domain/nutrition';
+import {
+  FOODS,
+  MAX_SWAP_RAW_G,
+  prioritizeForMeal,
+  swapEquivalents,
+  toCookedGrams,
+  type Food,
+} from '../../domain/foodDb';
+import type { MassMacro, MealPlan } from '../../domain/nutrition';
 import styles from './FoodSwapModal.module.css';
 
 interface FoodSwapModalProps {
@@ -11,6 +18,8 @@ interface FoodSwapModalProps {
   food: Food | null;
   grams: number;
   macro: MassMacro;
+  /** Comida desde la que se abrió: sus alimentos típicos aparecen primero. */
+  mealId?: MealPlan['id'];
   onClose: () => void;
 }
 
@@ -25,9 +34,13 @@ export default function FoodSwapModal({
   food,
   grams,
   macro,
+  mealId,
   onClose,
 }: FoodSwapModalProps) {
-  const alternatives = food ? swapEquivalents(food, grams, macro, FOODS) : [];
+  const reasonable = food
+    ? swapEquivalents(food, grams, macro, FOODS).filter((a) => a.grams <= MAX_SWAP_RAW_G)
+    : [];
+  const alternatives = mealId ? prioritizeForMeal(reasonable, mealId) : reasonable;
 
   return (
     <Modal open={open && !!food} title={food ? `Intercambiar ${food.name}` : ''} onClose={onClose}>
@@ -35,7 +48,7 @@ export default function FoodSwapModal({
         <>
           <p className={styles.intro}>
             Alternativas por {MACRO_LABEL[macro]} (misma categoría), con los gramos en crudo
-            equivalentes.
+            equivalentes.{mealId ? ' Los de esta comida aparecen primero.' : ''}
           </p>
           {alternatives.length === 0 ? (
             <p className={styles.empty}>No hay alternativas en esta categoría.</p>

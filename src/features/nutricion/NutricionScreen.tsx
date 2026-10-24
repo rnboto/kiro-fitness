@@ -4,7 +4,12 @@
 import { useMemo, useState } from 'react';
 import { useProfile } from '../../context/ProfileContext';
 import { useSettings } from '../../context/SettingsContext';
-import { buildDailyPlan, type MassMacro, type NutritionInput } from '../../domain/nutrition';
+import {
+  buildDailyPlan,
+  type MassMacro,
+  type MealPlan,
+  type NutritionInput,
+} from '../../domain/nutrition';
 import type { Food } from '../../domain/foodDb';
 import MealCard from './MealCard';
 import FoodSwapModal from './FoodSwapModal';
@@ -21,11 +26,12 @@ interface SwapState {
   food: Food;
   grams: number;
   macro: MassMacro;
+  mealId: MealPlan['id'];
 }
 
 export default function NutricionScreen() {
   const { profile } = useProfile();
-  const { settings } = useSettings();
+  const { settings, updateSettings } = useSettings();
   const [swap, setSwap] = useState<SwapState | null>(null);
 
   const plan = useMemo(() => {
@@ -50,7 +56,9 @@ export default function NutricionScreen() {
     <div className={styles.screen}>
       <header className={styles.header}>
         <h1 className={styles.title}>Nutrición</h1>
-        <p className={styles.subtitle}>Plan diario calculado a partir de tu último estudio.</p>
+        <p className={styles.subtitle}>
+          Plan diario calculado a partir de tu último estudio. Post-entreno es tu desayuno.
+        </p>
       </header>
 
       <section className={styles.summary} aria-label="Resumen diario">
@@ -83,7 +91,15 @@ export default function NutricionScreen() {
           <MealCard
             key={meal.id}
             meal={meal}
-            onSwap={(food, grams, macro) => setSwap({ food, grams, macro })}
+            selectedPlateId={settings?.selectedPlates?.[meal.id]}
+            onSelectPlate={(plateId) => {
+              if (!settings) return;
+              void updateSettings({
+                ...settings,
+                selectedPlates: { ...settings.selectedPlates, [meal.id]: plateId },
+              });
+            }}
+            onSwap={(food, grams, macro) => setSwap({ food, grams, macro, mealId: meal.id })}
           />
         ))}
       </div>
@@ -93,6 +109,7 @@ export default function NutricionScreen() {
         food={swap?.food ?? null}
         grams={swap?.grams ?? 0}
         macro={swap?.macro ?? 'proteinG'}
+        mealId={swap?.mealId}
         onClose={() => setSwap(null)}
       />
     </div>

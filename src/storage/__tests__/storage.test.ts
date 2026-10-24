@@ -92,4 +92,15 @@ describe('settingsStore', () => {
     const got = await getSettings();
     expect(got.activityFactor).toBe(1.55);
   });
+
+  it('selectedPlates es opcional: no está en los defaults y se persiste si se guarda', async () => {
+    expect(DEFAULT_SETTINGS.selectedPlates).toBeUndefined();
+    expect((await getSettings()).selectedPlates).toBeUndefined();
+    await saveSettings({
+      ...DEFAULT_SETTINGS,
+      selectedPlates: { post: 'post_skyr_muesli_frutos_rojos' },
+    });
+    const got = await getSettings();
+    expect(got.selectedPlates?.post).toBe('post_skyr_muesli_frutos_rojos');
+  });
 });

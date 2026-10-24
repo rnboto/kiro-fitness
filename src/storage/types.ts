@@ -71,6 +71,12 @@ export interface Settings {
   reminders: ReminderSettings;
   /** Overrides de imágenes de ejercicios, por exerciseId (design §8.2). */
   exerciseOverrides: Record<string, { imageUrl?: string; endImageUrl?: string }>;
+  /**
+   * Plato elegido por comida en Nutrición ("Ideas de comida"). Opcional por
+   * compatibilidad hacia atrás: los datos antiguos no lo tienen y NO está en
+   * DEFAULT_SETTINGS; sin valor (o con un id desconocido) se usa el primer plato.
+   */
+  selectedPlates?: Partial<Record<'pre' | 'post' | 'almuerzo' | 'cena', string>>;
 }
 
 /** Recordatorios por defecto (design §5, literales exactos). */
