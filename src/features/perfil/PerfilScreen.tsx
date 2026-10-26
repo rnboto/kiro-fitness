@@ -7,9 +7,15 @@ import { useProfile } from '../../context/ProfileContext';
 import { useAttendanceCalendar } from '../../domain/useAttendanceCalendar';
 import AttendanceCalendar from '../estadisticas/AttendanceCalendar';
 import MusicButton from '../music/MusicButton';
+import WeighInBanner from '../notificaciones/WeighInBanner';
 import styles from './PerfilScreen.module.css';
 
-export default function PerfilScreen() {
+interface PerfilScreenProps {
+  /** Navega a Estadísticas › Cuerpo (banner "Toca pesarte"). */
+  onGoToCuerpo?: () => void;
+}
+
+export default function PerfilScreen({ onGoToCuerpo }: PerfilScreenProps = {}) {
   const { profile } = useProfile();
   const {
     now,
@@ -23,6 +29,8 @@ export default function PerfilScreen() {
 
   return (
     <div className={styles.screen}>
+      <WeighInBanner onGoToCuerpo={onGoToCuerpo} />
+
       <section className={styles.card}>
         <h2 className={styles.cardTitle}>Calendario de asistencia</h2>
         <p className={styles.calHelper}>Toca un día para marcar que entrenaste.</p>

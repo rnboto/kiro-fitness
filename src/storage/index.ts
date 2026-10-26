@@ -9,8 +9,15 @@ export type {
   ExerciseSwap,
   ExerciseSwaps,
   ExerciseSwapScope,
+  WeeklyWeighInSettings,
+  MonthlyWeighInSettings,
 } from './types';
-export { DEFAULT_SETTINGS, DEFAULT_REMINDERS } from './types';
+export {
+  DEFAULT_SETTINGS,
+  DEFAULT_REMINDERS,
+  DEFAULT_WEIGHT_WEEKLY,
+  DEFAULT_WEIGHT_MONTHLY,
+} from './types';
 
 export { getBackend, type StorageBackend, type StoreName } from './db';
 

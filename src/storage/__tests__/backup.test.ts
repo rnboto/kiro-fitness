@@ -3,6 +3,7 @@ import { __resetBackendForTests } from '../db';
 import { addEntry, deleteEntry, getAllEntries, updateEntry } from '../profileStore';
 import { readGoal } from '../../domain/goal';
 import { readExerciseSwaps } from '../../domain/exerciseSubstitutions';
+import { readWeighInReminders } from '../../domain/weighInReminders';
 import { parseBackup, serializeBackup } from '../../domain/dataPorting';
 import { addSet, getAllSets } from '../workoutLogStore';
 import { addCardioSession, getAllCardioSessions } from '../cardioStore';
@@ -273,6 +274,53 @@ describe('sustituciones de ejercicios en el backup', () => {
     expect(result.backup.settings.exerciseSwaps).toEqual({});
     await importReplace(result.backup);
     expect(readExerciseSwaps(await getSettings())).toEqual({});
+  });
+});
+
+describe('pesajes semanal/mensual en el backup', () => {
+  const WEEKLY = { enabled: false, weekday: 5, time: '07:15' };
+  const MONTHLY = { enabled: true, dayOfMonth: 31, time: '08:00' };
+
+  it('round-trip: export → wipe → importReplace conserva los pesajes', async () => {
+    await seed();
+    await saveSettings({
+      ...DEFAULT_SETTINGS,
+      reminders: { ...DEFAULT_SETTINGS.reminders, weightWeekly: WEEKLY, weightMonthly: MONTHLY },
+    });
+    const first = await exportAll();
+
+    __resetBackendForTests();
+    localStorage.clear();
+    await importReplace(parseOk(serializeBackup(first)));
+
+    const settings = await getSettings();
+    expect(settings.reminders.weightWeekly).toEqual(WEEKLY);
+    expect(settings.reminders.weightMonthly).toEqual(MONTHLY);
+    expect(readWeighInReminders(settings.reminders)).toEqual({ weekly: WEEKLY, monthly: MONTHLY });
+    expect((await exportAll()).settings).toEqual(first.settings);
+  });
+
+  it('backup antiguo sin claves de pesaje importa bien y aplica los defaults', async () => {
+    await seed();
+    const legacy = JSON.parse(serializeBackup(await exportAll()));
+    delete legacy.settings.reminders.weightWeekly;
+    delete legacy.settings.reminders.weightMonthly;
+
+    const result = parseBackup(JSON.stringify(legacy));
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+
+    __resetBackendForTests();
+    localStorage.clear();
+    await importReplace(result.backup);
+
+    const settings = await getSettings();
+    expect(settings.reminders.weightLog).toEqual(DEFAULT_SETTINGS.reminders.weightLog);
+    expect(readWeighInReminders(settings.reminders)).toEqual({
+      weekly: { enabled: true, weekday: 1, time: '06:00' },
+      monthly: { enabled: true, dayOfMonth: 1, time: '06:00' },
+    });
+    expect(await getAllEntries()).toHaveLength(1);
   });
 });
 

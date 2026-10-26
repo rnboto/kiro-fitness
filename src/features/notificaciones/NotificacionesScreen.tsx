@@ -6,6 +6,17 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useProfile } from '../../context/ProfileContext';
 import { useSettings } from '../../context/SettingsContext';
 import type { ReminderSettings, Settings } from '../../storage';
+import NumberStepper from '../../components/NumberStepper';
+import {
+  WEEKDAY_CHIPS,
+  formatWeighInWhen,
+  nextMonthlyWeighIn,
+  nextWeeklyWeighIn,
+  readWeighInReminders,
+} from '../../domain/weighInReminders';
+import { buildWeighInIcs } from '../../domain/weighInIcs';
+import { downloadIcs } from './downloadIcs';
+import WeighInBanner from './WeighInBanner';
 import {
   getPermissionState,
   nextBioimpedanceDate,
@@ -48,9 +59,14 @@ interface UpcomingItem {
 interface NotificacionesScreenProps {
   /** Abre el panel de Ajustes/Acerca de (design §13). */
   onOpenSettings?: () => void;
+  /** Navega a Estadísticas › Cuerpo (banner "Toca pesarte"). */
+  onGoToCuerpo?: () => void;
 }
 
-export default function NotificacionesScreen({ onOpenSettings }: NotificacionesScreenProps) {
+export default function NotificacionesScreen({
+  onOpenSettings,
+  onGoToCuerpo,
+}: NotificacionesScreenProps) {
   const { settings, updateSettings } = useSettings();
   const { profile } = useProfile();
   const [permission, setPermission] = useState<PermissionState>(() => getPermissionState());
@@ -80,6 +96,21 @@ export default function NotificacionesScreen({ onOpenSettings }: NotificacionesS
     if (reminders.weightLog.enabled) {
       const next = new Date(now.getTime() + msUntilNextDaily(now, reminders.weightLog.time));
       items.push({ key: 'weight', label: 'Registrar peso', when: formatDateTime(next) });
+    }
+    const { weekly, monthly } = readWeighInReminders(reminders);
+    if (weekly.enabled) {
+      items.push({
+        key: 'weightWeekly',
+        label: 'Pesaje semanal',
+        when: formatWeighInWhen(nextWeeklyWeighIn(now, weekly.weekday, weekly.time)),
+      });
+    }
+    if (monthly.enabled) {
+      items.push({
+        key: 'weightMonthly',
+        label: 'Pesaje mensual',
+        when: formatWeighInWhen(nextMonthlyWeighIn(now, monthly.dayOfMonth, monthly.time)),
+      });
     }
     if (reminders.hydration.enabled) {
       const next = nextHydrationFire(
@@ -115,6 +146,15 @@ export default function NotificacionesScreen({ onOpenSettings }: NotificacionesS
     void updateSettings(updated);
   };
 
+  // Pesajes: lectura defensiva (ajustes antiguos sin claves → defaults). Al
+  // editar se escribe el objeto completo, actualizando los ajustes antiguos.
+  const weighIn = readWeighInReminders(reminders);
+  const anyWeighIn = weighIn.weekly.enabled || weighIn.monthly.enabled;
+  const patchWeekly = (change: Partial<typeof weighIn.weekly>) =>
+    patch({ ...reminders, weightWeekly: { ...weighIn.weekly, ...change } });
+  const patchMonthly = (change: Partial<typeof weighIn.monthly>) =>
+    patch({ ...reminders, weightMonthly: { ...weighIn.monthly, ...change } });
+
   const askPermission = async () => {
     const result = await requestPermission();
     setPermission(result);
@@ -125,9 +165,12 @@ export default function NotificacionesScreen({ onOpenSettings }: NotificacionesS
       <header className={styles.header}>
         <h1 className={styles.title}>Notificaciones</h1>
         <p className={styles.subtitle}>
-          Recordatorios de peso, hidratación y tu próximo test de bioimpedancia.
+          Recordatorios de peso, pesajes semanales y mensuales, hidratación y tu próximo
+          test de bioimpedancia.
         </p>
       </header>
+
+      <WeighInBanner onGoToCuerpo={onGoToCuerpo} />
 
       {permission !== 'granted' && (
         <section className={styles.permission}>
@@ -211,6 +254,116 @@ export default function NotificacionesScreen({ onOpenSettings }: NotificacionesS
             }
           />
         </label>
+      </section>
+
+      {/* Pesaje semanal */}
+      <section className={styles.card} aria-labelledby="weighin-weekly-title">
+        <div className={styles.rowHead}>
+          <h2 id="weighin-weekly-title" className={styles.cardTitle}>
+            Pesaje semanal
+          </h2>
+          <label className={styles.switch}>
+            <input
+              type="checkbox"
+              aria-label="Activar pesaje semanal"
+              checked={weighIn.weekly.enabled}
+              onChange={(e) => patchWeekly({ enabled: e.target.checked })}
+            />
+            <span className={styles.switchLabel}>
+              {weighIn.weekly.enabled ? 'Activo' : 'Inactivo'}
+            </span>
+          </label>
+        </div>
+        <div className={styles.chips} role="group" aria-label="Día de la semana">
+          {WEEKDAY_CHIPS.map((chip) => {
+            const selected = chip.value === weighIn.weekly.weekday;
+            return (
+              <button
+                key={chip.value}
+                type="button"
+                className={`${styles.chip} ${selected ? styles.chipSelected : ''}`}
+                aria-label={chip.name}
+                aria-pressed={selected}
+                onClick={() => patchWeekly({ weekday: chip.value })}
+              >
+                {chip.letter}
+              </button>
+            );
+          })}
+        </div>
+        <label className={styles.field}>
+          <span>Hora del aviso</span>
+          <input
+            type="time"
+            value={weighIn.weekly.time}
+            onChange={(e) => {
+              if (e.target.value) patchWeekly({ time: e.target.value });
+            }}
+          />
+        </label>
+        <p className={styles.hint}>Pésate en ayunas, antes del pre-entreno.</p>
+      </section>
+
+      {/* Pesaje mensual */}
+      <section className={styles.card} aria-labelledby="weighin-monthly-title">
+        <div className={styles.rowHead}>
+          <h2 id="weighin-monthly-title" className={styles.cardTitle}>
+            Pesaje mensual
+          </h2>
+          <label className={styles.switch}>
+            <input
+              type="checkbox"
+              aria-label="Activar pesaje mensual"
+              checked={weighIn.monthly.enabled}
+              onChange={(e) => patchMonthly({ enabled: e.target.checked })}
+            />
+            <span className={styles.switchLabel}>
+              {weighIn.monthly.enabled ? 'Activo' : 'Inactivo'}
+            </span>
+          </label>
+        </div>
+        <NumberStepper
+          id="weighin-monthly-day"
+          label="Día del mes"
+          value={weighIn.monthly.dayOfMonth}
+          min={1}
+          max={31}
+          onChange={(v) => patchMonthly({ dayOfMonth: v })}
+        />
+        <p className={styles.note}>Si el mes no tiene ese día, se avisa el último día</p>
+        <label className={styles.field}>
+          <span>Hora del aviso</span>
+          <input
+            type="time"
+            value={weighIn.monthly.time}
+            onChange={(e) => {
+              if (e.target.value) patchMonthly({ time: e.target.value });
+            }}
+          />
+        </label>
+      </section>
+
+      {/* Calendario del móvil (.ics) */}
+      <section className={styles.card}>
+        <h2 className={styles.cardTitle}>Calendario del móvil</h2>
+        <button
+          type="button"
+          className={styles.primaryBtn}
+          disabled={!anyWeighIn}
+          onClick={() => downloadIcs(buildWeighInIcs(reminders, new Date()))}
+        >
+          Añadir al calendario del móvil
+        </button>
+        <p className={styles.hint}>
+          Las notificaciones de Kiro solo suenan con la app abierta. Con el calendario del
+          móvil te avisa siempre.
+        </p>
+        <p className={styles.note}>
+          Los días 29, 30 y 31 se repiten el último día de cada mes en el calendario.
+        </p>
+        {!anyWeighIn && (
+          <p className={styles.note}>Activa el pesaje semanal o mensual para exportarlo.</p>
+        )}
       </section>
 
       {/* Hidratación */}

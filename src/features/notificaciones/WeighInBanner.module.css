@@ -1,0 +1,42 @@
+.banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--kiro-space-3);
+  background: var(--kiro-surface-2);
+  border: 1px solid var(--kiro-warning);
+  border-left-width: 4px;
+  border-radius: var(--kiro-radius-md);
+  padding: var(--kiro-space-3) var(--kiro-space-4);
+}
+
+.text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1 1 200px;
+  min-width: 0;
+}
+
+.title {
+  font-size: var(--kiro-font-size-md);
+  font-weight: 700;
+  color: var(--kiro-warning);
+}
+
+.message {
+  color: var(--kiro-text-muted);
+  font-size: var(--kiro-font-size-sm);
+}
+
+.action {
+  min-height: 44px;
+  padding: 0 var(--kiro-space-4);
+  border-radius: var(--kiro-radius-pill);
+  background: var(--kiro-accent);
+  color: #06241b;
+  border: none;
+  font-weight: 700;
+  cursor: pointer;
+}

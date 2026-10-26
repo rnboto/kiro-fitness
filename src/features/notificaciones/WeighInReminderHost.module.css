@@ -1,0 +1,64 @@
+/* Aviso in-app de pesaje (fallback sin permiso del sistema). Fijo arriba,
+   dejando libre el botón de Ajustes (40px + márgenes a la derecha). */
+.toast {
+  position: fixed;
+  top: calc(env(safe-area-inset-top) + var(--kiro-space-3));
+  left: var(--kiro-space-3);
+  right: calc(var(--kiro-space-3) * 2 + 40px);
+  z-index: 19;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--kiro-space-3);
+  background: var(--kiro-surface-3);
+  border: 1px solid var(--kiro-warning);
+  border-radius: var(--kiro-radius-md);
+  padding: var(--kiro-space-3);
+  color: var(--kiro-text);
+  font-size: var(--kiro-font-size-sm);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+}
+
+.text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.title {
+  font-weight: 700;
+  color: var(--kiro-warning);
+}
+
+.body {
+  color: var(--kiro-text);
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: var(--kiro-space-2);
+  flex-shrink: 0;
+}
+
+.go {
+  min-height: 44px;
+  padding: 0 var(--kiro-space-4);
+  border-radius: var(--kiro-radius-pill);
+  background: var(--kiro-accent);
+  color: #06241b;
+  border: none;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.close {
+  min-width: 44px;
+  min-height: 44px;
+  background: transparent;
+  border: none;
+  color: var(--kiro-text-muted);
+  cursor: pointer;
+  font-size: var(--kiro-font-size-md);
+}

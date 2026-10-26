@@ -58,7 +58,48 @@ export interface ReminderSettings {
     endTime: string; // 'HH:mm'
   };
   bioimpedance: { enabled: boolean; intervalWeeks: number };
+  /**
+   * Pesaje semanal. Opcional por compatibilidad hacia atrás: los ajustes y
+   * backups antiguos no lo tienen; se lee siempre con `readWeighInReminders`.
+   */
+  weightWeekly?: WeeklyWeighInSettings;
+  /** Pesaje mensual. Opcional por compatibilidad; se lee con `readWeighInReminders`. */
+  weightMonthly?: MonthlyWeighInSettings;
 }
+
+/**
+ * Pesaje semanal. `weekday` sigue la convención de JS `Date.getDay()`:
+ * 0 = domingo, 1 = lunes … 6 = sábado. `time` es 'HH:mm' local.
+ */
+export interface WeeklyWeighInSettings {
+  enabled: boolean;
+  weekday: number;
+  time: string;
+}
+
+/**
+ * Pesaje mensual. `dayOfMonth` 1-31; si el mes tiene menos días, se avisa el
+ * último día del mes. `time` es 'HH:mm' local.
+ */
+export interface MonthlyWeighInSettings {
+  enabled: boolean;
+  dayOfMonth: number;
+  time: string;
+}
+
+/** Default del pesaje semanal: lunes 06:00 (en ayunas). */
+export const DEFAULT_WEIGHT_WEEKLY: WeeklyWeighInSettings = {
+  enabled: true,
+  weekday: 1,
+  time: '06:00',
+};
+
+/** Default del pesaje mensual: día 1 a las 06:00. */
+export const DEFAULT_WEIGHT_MONTHLY: MonthlyWeighInSettings = {
+  enabled: true,
+  dayOfMonth: 1,
+  time: '06:00',
+};
 
 /** Alcance de una sustitución de ejercicio. */
 export type ExerciseSwapScope = 'hoy' | 'fijo';
@@ -107,6 +148,8 @@ export const DEFAULT_REMINDERS: ReminderSettings = {
   weightLog: { enabled: true, time: '07:30' },
   hydration: { enabled: true, intervalMinutes: 90, startTime: '08:00', endTime: '20:00' },
   bioimpedance: { enabled: true, intervalWeeks: 4 },
+  weightWeekly: DEFAULT_WEIGHT_WEEKLY,
+  weightMonthly: DEFAULT_WEIGHT_MONTHLY,
 };
 
 /** Ajustes por defecto (design §5, literales exactos). */

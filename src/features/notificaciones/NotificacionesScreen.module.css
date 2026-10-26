@@ -163,6 +163,40 @@
   font-size: var(--kiro-font-size-sm);
 }
 
+.primaryBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Chips de día de la semana (L M X J V S D), táctiles de 44px. */
+.chips {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: var(--kiro-space-2);
+}
+
+.chip {
+  min-height: 44px;
+  border-radius: var(--kiro-radius-md);
+  background: var(--kiro-surface-2);
+  border: 1px solid var(--kiro-border);
+  color: var(--kiro-text-muted);
+  font-weight: 700;
+  font-size: var(--kiro-font-size-sm);
+  cursor: pointer;
+}
+
+.chipSelected {
+  background: var(--kiro-accent-soft);
+  border-color: var(--kiro-accent);
+  color: var(--kiro-accent);
+}
+
+.note {
+  color: var(--kiro-text-dim);
+  font-size: var(--kiro-font-size-xs);
+}
+
 .settingsLink {
   padding: var(--kiro-space-3);
   border-radius: var(--kiro-radius-md);

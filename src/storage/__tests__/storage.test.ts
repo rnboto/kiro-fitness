@@ -9,6 +9,7 @@ import {
   type NewProfileEntry,
 } from '../profileStore';
 import { readGoal } from '../../domain/goal';
+import { readWeighInReminders } from '../../domain/weighInReminders';
 import { addSet, getAllSets, getLastSet } from '../workoutLogStore';
 import { getSettings, saveSettings } from '../settingsStore';
 import { DEFAULT_SETTINGS } from '../types';
@@ -208,6 +209,31 @@ describe('settingsStore', () => {
     expect(readGoal(await getSettings())).toEqual({ goalWeightKg: 84, goalStartWeightKg: 90 });
     await saveSettings({ ...DEFAULT_SETTINGS, goalWeightKg: null, goalStartWeightKg: null });
     expect(readGoal(await getSettings())).toEqual({ goalWeightKg: null, goalStartWeightKg: null });
+  });
+
+  it('defaults de pesaje semanal/mensual sin tocar los demás recordatorios', () => {
+    expect(DEFAULT_SETTINGS.reminders.weightWeekly).toEqual({ enabled: true, weekday: 1, time: '06:00' });
+    expect(DEFAULT_SETTINGS.reminders.weightMonthly).toEqual({ enabled: true, dayOfMonth: 1, time: '06:00' });
+    expect(DEFAULT_SETTINGS.reminders.weightLog).toEqual({ enabled: true, time: '07:30' });
+    expect(DEFAULT_SETTINGS.reminders.hydration).toEqual({
+      enabled: true,
+      intervalMinutes: 90,
+      startTime: '08:00',
+      endTime: '20:00',
+    });
+    expect(DEFAULT_SETTINGS.reminders.bioimpedance).toEqual({ enabled: true, intervalWeeks: 4 });
+  });
+
+  it('ajustes antiguos sin pesajes cargan y se leen con los defaults', async () => {
+    const { weightWeekly: _w, weightMonthly: _m, ...oldReminders } = DEFAULT_SETTINGS.reminders;
+    await saveSettings({ ...DEFAULT_SETTINGS, reminders: oldReminders } as never);
+    const got = await getSettings();
+    expect('weightWeekly' in got.reminders).toBe(false);
+    expect(got.reminders.weightLog).toEqual({ enabled: true, time: '07:30' });
+    expect(readWeighInReminders(got.reminders)).toEqual({
+      weekly: { enabled: true, weekday: 1, time: '06:00' },
+      monthly: { enabled: true, dayOfMonth: 1, time: '06:00' },
+    });
   });
 
   it('valores corruptos de objetivo se leen como null', async () => {

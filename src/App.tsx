@@ -14,6 +14,7 @@ import NutricionScreen from './features/nutricion/NutricionScreen';
 import GimnasioScreen from './features/gimnasio/GimnasioScreen';
 import EstadisticasScreen from './features/estadisticas/EstadisticasScreen';
 import NotificacionesScreen from './features/notificaciones/NotificacionesScreen';
+import WeighInReminderHost from './features/notificaciones/WeighInReminderHost';
 import SettingsPanel from './features/ajustes/SettingsPanel';
 import TimerFab from './features/timer/TimerFab';
 import MusicFab from './features/music/MusicFab';
@@ -40,13 +41,16 @@ function AppContent() {
   // Gating: secciones bloqueadas si no hay perfil (caso de datos borrados).
   const locked = GATED_TABS.includes(tab) && profile === null;
 
+  // Estadísticas abre siempre en su pestaña interna Cuerpo (Registrar medición).
+  const goToCuerpo = () => setTab('estadisticas');
+
   let screen: React.ReactNode;
   if (locked) {
     screen = <LockedScreen onGoToPerfil={() => setTab('perfil')} />;
   } else {
     switch (tab) {
       case 'perfil':
-        screen = <PerfilScreen />;
+        screen = <PerfilScreen onGoToCuerpo={goToCuerpo} />;
         break;
       case 'nutricion':
         screen = <NutricionScreen />;
@@ -58,7 +62,12 @@ function AppContent() {
         screen = <EstadisticasScreen />;
         break;
       case 'notificaciones':
-        screen = <NotificacionesScreen onOpenSettings={() => setSettingsOpen(true)} />;
+        screen = (
+          <NotificacionesScreen
+            onOpenSettings={() => setSettingsOpen(true)}
+            onGoToCuerpo={goToCuerpo}
+          />
+        );
         break;
     }
   }
@@ -83,6 +92,8 @@ function AppContent() {
       {/* FAB global de Música: lanza Amazon Music desde cualquier pantalla,
           apilado encima del FAB del cronómetro para no solaparse. */}
       <MusicFab />
+      {/* Pesajes semanal/mensual: timers globales con cualquier pestaña abierta. */}
+      <WeighInReminderHost onGoToCuerpo={goToCuerpo} />
       <TabBar active={tab} onChange={setTab} />
 
       <Modal open={settingsOpen} title="Ajustes" onClose={() => setSettingsOpen(false)}>

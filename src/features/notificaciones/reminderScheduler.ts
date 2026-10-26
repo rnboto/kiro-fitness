@@ -2,6 +2,11 @@
 // y timers (FEAT-005). Las funciones puras no dependen de React ni de storage.
 
 import type { ReminderSettings } from '../../storage';
+import {
+  nextMonthlyWeighIn,
+  nextWeeklyWeighIn,
+  readWeighInReminders,
+} from '../../domain/weighInReminders';
 
 /** Parsea 'HH:mm' a minutos desde medianoche. */
 function parseTimeToMinutes(hhmm: string): number {
@@ -119,10 +124,23 @@ export function notify(
   title: string,
   body: string,
   onInApp?: (title: string, body: string) => void,
+  options?: { onClick?: () => void },
 ): void {
   if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
     try {
-      new Notification(title, { body });
+      const n = new Notification(title, { body });
+      if (options?.onClick) {
+        const onClick = options.onClick;
+        n.onclick = () => {
+          try {
+            window.focus();
+          } catch {
+            // sin foco disponible: seguimos navegando igualmente
+          }
+          onClick();
+          n.close();
+        };
+      }
       return;
     } catch {
       // cae al fallback in-app
@@ -218,6 +236,91 @@ export function scheduleReminders(
       cancelled = true;
       for (const t of timers) clearTimeout(t);
       timers.length = 0;
+    },
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Pesajes semanal y mensual. Scheduler propio (montado globalmente en App) para
+// que funcione con cualquier pestaña abierta. Mismo patrón: timers por marca de
+// tiempo, Notifications API si hay permiso y fallback in-app si no.
+// ---------------------------------------------------------------------------
+
+/** Máximo delay de setTimeout (~24.8 días). */
+const MAX_TIMEOUT_MS = 2_147_483_647;
+
+export const WEEKLY_WEIGHIN_TITLE = 'Pesaje semanal';
+export const MONTHLY_WEIGHIN_TITLE = 'Pesaje mensual';
+export const WEEKLY_WEIGHIN_BODY = 'Hoy toca pesarte (pesaje semanal). Hazlo en ayunas.';
+export const MONTHLY_WEIGHIN_BODY = 'Pesaje mensual: registra tu peso y tus medidas.';
+
+export interface WeighInScheduleDeps {
+  /** Fallback in-app cuando no hay permiso del sistema. */
+  onInApp?: (title: string, body: string) => void;
+  /** Click en la notificación del sistema (ir a Estadísticas › Cuerpo). */
+  onClick?: () => void;
+  /** Inyectable en tests; por defecto new Date(). */
+  now?: () => Date;
+}
+
+/**
+ * Programa los pesajes semanal/mensual activos. Las esperas largas (> 24.8
+ * días, posible en el mensual) se trocean y se re-arman sin disparar antes de
+ * tiempo. Tras cada disparo se calcula la siguiente ocurrencia a partir de
+ * (marca disparada + 1 min) para no volver a disparar la misma.
+ */
+export function scheduleWeighInReminders(
+  reminders: Partial<ReminderSettings> | null | undefined,
+  deps: WeighInScheduleDeps = {},
+): SchedulerHandle {
+  const now = deps.now ?? (() => new Date());
+  const timers = new Set<ReturnType<typeof setTimeout>>();
+  let cancelled = false;
+  const { weekly, monthly } = readWeighInReminders(reminders);
+
+  const startLoop = (next: (from: Date) => Date, title: string, body: string) => {
+    const armAt = (target: Date) => {
+      if (cancelled) return;
+      const delay = target.getTime() - now().getTime();
+      if (delay > MAX_TIMEOUT_MS) {
+        const t = setTimeout(() => {
+          timers.delete(t);
+          armAt(target);
+        }, MAX_TIMEOUT_MS);
+        timers.add(t);
+        return;
+      }
+      const t = setTimeout(() => {
+        timers.delete(t);
+        if (cancelled) return;
+        notify(title, body, deps.onInApp, { onClick: deps.onClick });
+        armAt(next(new Date(target.getTime() + 60_000)));
+      }, Math.max(0, delay));
+      timers.add(t);
+    };
+    armAt(next(now()));
+  };
+
+  if (weekly.enabled) {
+    startLoop(
+      (from) => nextWeeklyWeighIn(from, weekly.weekday, weekly.time),
+      WEEKLY_WEIGHIN_TITLE,
+      WEEKLY_WEIGHIN_BODY,
+    );
+  }
+  if (monthly.enabled) {
+    startLoop(
+      (from) => nextMonthlyWeighIn(from, monthly.dayOfMonth, monthly.time),
+      MONTHLY_WEIGHIN_TITLE,
+      MONTHLY_WEIGHIN_BODY,
+    );
+  }
+
+  return {
+    cancel: () => {
+      cancelled = true;
+      for (const t of timers) clearTimeout(t);
+      timers.clear();
     },
   };
 }
