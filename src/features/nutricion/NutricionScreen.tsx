@@ -14,10 +14,19 @@ import type { Food } from '../../domain/foodDb';
 import type { MealId } from '../../domain/mealPlates';
 import { readSelectedPlates, withPlateChoice } from '../../domain/plateSelection';
 import { buildDaySummary } from '../../domain/daySummary';
+import SegmentedControl from '../estadisticas/SegmentedControl';
 import MealCard from './MealCard';
 import MiDiaSummary from './MiDiaSummary';
 import FoodSwapModal from './FoodSwapModal';
+import ShoppingList from './ShoppingList';
 import styles from './NutricionScreen.module.css';
+
+type NutricionView = 'comidas' | 'compra';
+
+const VIEW_OPTIONS: { id: NutricionView; label: string }[] = [
+  { id: 'comidas', label: 'Comidas' },
+  { id: 'compra', label: 'Lista de la compra' },
+];
 
 const WARNING_TEXT: Record<NonNullable<ReturnType<typeof buildDailyPlan>['warning']>, string> = {
   FAT_REDUCED_TO_FLOOR:
@@ -37,34 +46,53 @@ export default function NutricionScreen() {
   const { profile } = useProfile();
   const { settings, updateSettings } = useSettings();
   const [swap, setSwap] = useState<SwapState | null>(null);
+  // Vista local (no se persiste): al volver a Nutrición se abre en «Comidas».
+  const [view, setView] = useState<NutricionView>('comidas');
 
+  // El plan solo depende del perfil y de estos 4 ajustes: marcar productos de
+  // la lista de la compra (que cambia `settings`) no lo recalcula.
+  const activityFactor = settings?.activityFactor;
+  const proteinGPerKg = settings?.proteinGPerKg;
+  const bmrBasis = settings?.bmrBasis;
+  const trainingStart = settings?.trainingStart;
   const plan = useMemo(() => {
-    if (!profile || !settings) return null;
+    if (
+      !profile ||
+      activityFactor === undefined ||
+      proteinGPerKg === undefined ||
+      bmrBasis === undefined ||
+      trainingStart === undefined
+    ) {
+      return null;
+    }
     const input: NutritionInput = {
       weightKg: profile.weightKg,
       bodyFatPct: profile.bodyFatPct,
       mmeKg: profile.mmeKg,
-      activityFactor: settings.activityFactor,
-      proteinGPerKg: settings.proteinGPerKg,
-      bmrBasis: settings.bmrBasis,
-      trainingStart: settings.trainingStart,
+      activityFactor,
+      proteinGPerKg,
+      bmrBasis,
+      trainingStart,
     };
     return buildDailyPlan(input);
-  }, [profile, settings]);
+  }, [profile, activityFactor, proteinGPerKg, bmrBasis, trainingStart]);
 
   // Platos elegidos por comida (lectura defensiva; solo ids, nunca gramos).
-  const selectedPlates = useMemo(() => readSelectedPlates(settings), [settings]);
+  const rawSelectedPlates = settings?.selectedPlates;
+  const selectedPlates = useMemo(
+    () => readSelectedPlates({ selectedPlates: rawSelectedPlates }),
+    [rawSelectedPlates],
+  );
   const daySummary = useMemo(
     () => (plan ? buildDaySummary(plan, selectedPlates) : null),
     [plan, selectedPlates],
   );
 
-  if (!plan || !daySummary) {
+  if (!settings) {
     return <p className={styles.loading}>Cargando tu plan…</p>;
   }
 
   const choosePlate = (mealId: MealId, plateId: string | null) => {
-    if (!settings) return;
     void updateSettings({
       ...settings,
       selectedPlates: withPlateChoice(selectedPlates, mealId, plateId),
@@ -79,63 +107,88 @@ export default function NutricionScreen() {
     });
   };
 
-  return (
-    <div className={styles.screen}>
-      <header className={styles.header}>
-        <h1 className={styles.title}>Nutrición</h1>
+  const comidas =
+    plan && daySummary ? (
+      <>
         <p className={styles.subtitle}>
           Plan diario calculado a partir de tu último estudio. Post-entreno es tu desayuno.
         </p>
+
+        <section className={styles.summary} aria-label="Resumen diario">
+          <div className={styles.metric}>
+            <span className={styles.metricLabel}>Objetivo</span>
+            <span className={styles.metricValue} data-testid="target-kcal">
+              {Math.round(plan.targetKcal)} kcal
+            </span>
+          </div>
+          <div className={styles.metric}>
+            <span className={styles.metricLabel}>Proteína</span>
+            <span className={styles.metricValue} data-testid="total-protein">
+              {Math.round(plan.totals.proteinG)} g
+            </span>
+          </div>
+          <div className={styles.metric}>
+            <span className={styles.metricLabel}>Carbos</span>
+            <span className={styles.metricValue}>{Math.round(plan.totals.carbsG)} g</span>
+          </div>
+          <div className={styles.metric}>
+            <span className={styles.metricLabel}>Grasa</span>
+            <span className={styles.metricValue}>{Math.round(plan.totals.fatG)} g</span>
+          </div>
+        </section>
+
+        {plan.warning && <p className={styles.warning}>{WARNING_TEXT[plan.warning]}</p>}
+
+        <MiDiaSummary summary={daySummary} onSelectMeal={scrollToMeal} />
+
+        <div className={styles.meals}>
+          {plan.meals.map((meal) => (
+            <MealCard
+              key={meal.id}
+              meal={meal}
+              selectedPlateId={selectedPlates[meal.id]}
+              onSelectPlate={(plateId) => choosePlate(meal.id, plateId)}
+              onClearPlate={() => choosePlate(meal.id, null)}
+              onSwap={(food, grams, macro) => setSwap({ food, grams, macro, mealId: meal.id })}
+            />
+          ))}
+        </div>
+
+        <FoodSwapModal
+          open={swap !== null}
+          food={swap?.food ?? null}
+          grams={swap?.grams ?? 0}
+          macro={swap?.macro ?? 'proteinG'}
+          mealId={swap?.mealId}
+          onClose={() => setSwap(null)}
+        />
+      </>
+    ) : (
+      <p className={styles.loading}>Cargando tu plan…</p>
+    );
+
+  return (
+    <div className={styles.screen}>
+      <header className={styles.header} data-print-hide>
+        <h1 className={styles.title}>Nutrición</h1>
       </header>
 
-      <section className={styles.summary} aria-label="Resumen diario">
-        <div className={styles.metric}>
-          <span className={styles.metricLabel}>Objetivo</span>
-          <span className={styles.metricValue} data-testid="target-kcal">
-            {Math.round(plan.targetKcal)} kcal
-          </span>
-        </div>
-        <div className={styles.metric}>
-          <span className={styles.metricLabel}>Proteína</span>
-          <span className={styles.metricValue} data-testid="total-protein">
-            {Math.round(plan.totals.proteinG)} g
-          </span>
-        </div>
-        <div className={styles.metric}>
-          <span className={styles.metricLabel}>Carbos</span>
-          <span className={styles.metricValue}>{Math.round(plan.totals.carbsG)} g</span>
-        </div>
-        <div className={styles.metric}>
-          <span className={styles.metricLabel}>Grasa</span>
-          <span className={styles.metricValue}>{Math.round(plan.totals.fatG)} g</span>
-        </div>
-      </section>
-
-      {plan.warning && <p className={styles.warning}>{WARNING_TEXT[plan.warning]}</p>}
-
-      <MiDiaSummary summary={daySummary} onSelectMeal={scrollToMeal} />
-
-      <div className={styles.meals}>
-        {plan.meals.map((meal) => (
-          <MealCard
-            key={meal.id}
-            meal={meal}
-            selectedPlateId={selectedPlates[meal.id]}
-            onSelectPlate={(plateId) => choosePlate(meal.id, plateId)}
-            onClearPlate={() => choosePlate(meal.id, null)}
-            onSwap={(food, grams, macro) => setSwap({ food, grams, macro, mealId: meal.id })}
-          />
-        ))}
+      <div data-print-hide>
+        <SegmentedControl<NutricionView>
+          ariaLabel="Secciones de Nutrición"
+          options={VIEW_OPTIONS}
+          value={view}
+          onChange={setView}
+        />
       </div>
 
-      <FoodSwapModal
-        open={swap !== null}
-        food={swap?.food ?? null}
-        grams={swap?.grams ?? 0}
-        macro={swap?.macro ?? 'proteinG'}
-        mealId={swap?.mealId}
-        onClose={() => setSwap(null)}
-      />
+      <div role="tabpanel" className={styles.panel}>
+        {view === 'comidas' ? (
+          comidas
+        ) : (
+          <ShoppingList plan={plan} selectedPlates={selectedPlates} />
+        )}
+      </div>
     </div>
   );
 }

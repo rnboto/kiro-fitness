@@ -18,6 +18,13 @@
   color: var(--kiro-text-muted);
 }
 
+/* Contenido de la pestaña activa (Comidas / Lista de la compra). */
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--kiro-space-5);
+}
+
 .loading {
   color: var(--kiro-text-muted);
 }

@@ -4,6 +4,7 @@ import { addEntry, deleteEntry, getAllEntries, updateEntry } from '../profileSto
 import { readGoal } from '../../domain/goal';
 import { readExerciseSwaps } from '../../domain/exerciseSubstitutions';
 import { readSelectedPlates } from '../../domain/plateSelection';
+import { readShoppingChecked, readShoppingLastReset } from '../../domain/shoppingList';
 import { readWeighInReminders } from '../../domain/weighInReminders';
 import { parseBackup, serializeBackup } from '../../domain/dataPorting';
 import { addSet, getAllSets } from '../workoutLogStore';
@@ -324,6 +325,73 @@ describe('platos elegidos en el backup', () => {
       await importReplace(result.backup);
       expect(readSelectedPlates(await getSettings())).toEqual({});
     }
+  });
+});
+
+describe('lista de la compra en el backup', () => {
+  const CHECKED = { platano: true as const, muesli: true as const, 'pantry:sal': true as const };
+
+  it('round-trip con marcas y fecha: export → wipe → importReplace las conserva', async () => {
+    await seed();
+    await saveSettings({
+      ...DEFAULT_SETTINGS,
+      shoppingChecked: CHECKED,
+      shoppingLastReset: '2026-11-03',
+    });
+    const first = await exportAll();
+    expect(readShoppingChecked(first.settings)).toEqual(CHECKED);
+
+    __resetBackendForTests();
+    localStorage.clear();
+    await importReplace(parseOk(serializeBackup(first)));
+
+    const settings = await getSettings();
+    expect(readShoppingChecked(settings)).toEqual(CHECKED);
+    expect(readShoppingLastReset(settings)).toBe('2026-11-03');
+    expect((await exportAll()).settings).toEqual(first.settings);
+  });
+
+  it('backup antiguo sin claves de la lista importa bien y no hay marcas', async () => {
+    await seed();
+    const legacy = JSON.parse(serializeBackup(await exportAll()));
+    delete legacy.settings.shoppingChecked;
+    delete legacy.settings.shoppingLastReset;
+
+    __resetBackendForTests();
+    localStorage.clear();
+    await importReplace(parseOk(JSON.stringify(legacy)));
+
+    const settings = await getSettings();
+    expect('shoppingChecked' in settings).toBe(false);
+    expect('shoppingLastReset' in settings).toBe(false);
+    expect(readShoppingChecked(settings)).toEqual({});
+    expect(readShoppingLastReset(settings)).toBeNull();
+    expect(await getAllSets()).toHaveLength(1);
+    expect(await getAllEntries()).toHaveLength(1);
+  });
+
+  it('claves corruptas no rechazan el archivo y se sanean', async () => {
+    await seed();
+    const base = JSON.parse(serializeBackup(await exportAll()));
+
+    base.settings.shoppingChecked = 'x';
+    base.settings.shoppingLastReset = 'ayer';
+    let result = parseBackup(JSON.stringify(base));
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.backup.settings.shoppingChecked).toEqual({});
+    expect('shoppingLastReset' in result.backup.settings).toBe(false);
+
+    base.settings.shoppingChecked = { foo: true, platano: 1, muesli: true };
+    base.settings.shoppingLastReset = '2026-02-30';
+    result = parseBackup(JSON.stringify(base));
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.backup.settings.shoppingChecked).toEqual({ muesli: true });
+    expect('shoppingLastReset' in result.backup.settings).toBe(false);
+
+    await importReplace(result.backup);
+    expect(readShoppingChecked(await getSettings())).toEqual({ muesli: true });
   });
 });
 

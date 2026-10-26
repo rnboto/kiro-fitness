@@ -6,6 +6,7 @@ import type { CardioSession, LoggedSet, ProfileEntry, Settings } from '../storag
 import { sanitizeGoalKeys } from './goal';
 import { sanitizeExerciseSwapsKey } from './exerciseSubstitutions';
 import { sanitizeSelectedPlatesKey } from './plateSelection';
+import { sanitizeShoppingKeys } from './shoppingList';
 
 /** Versión actual del esquema del backup JSON. */
 export const SCHEMA_VERSION = 1 as const;
@@ -19,7 +20,8 @@ export interface KiroBackup {
   cardio: CardioSession[];
   /**
    * Ajustes. Incluye, opcionalmente, el objetivo de peso (goalWeightKg/goalStartWeightKg)
-   * las sustituciones de ejercicios (exerciseSwaps) y los platos elegidos (selectedPlates).
+   * las sustituciones de ejercicios (exerciseSwaps), los platos elegidos (selectedPlates)
+   * y la lista de la compra (shoppingChecked/shoppingLastReset).
    */
   settings: Settings;
   /** Marcas manuales de asistencia ('YYYY-MM-DD'). Opcional por compatibilidad. */
@@ -115,8 +117,9 @@ export function parseBackup(text: string): ParseResult {
       // se sanean solo si vienen; los backups antiguos quedan idénticos.
       // Igual con las sustituciones de ejercicios (exerciseSwaps): opcional.
       // Y con los platos elegidos por comida (selectedPlates): opcional.
-      settings: sanitizeSelectedPlatesKey(
-        sanitizeExerciseSwapsKey(sanitizeGoalKeys(parsed.settings)),
+      // Y con la lista de la compra (shoppingChecked/shoppingLastReset): opcional.
+      settings: sanitizeShoppingKeys(
+        sanitizeSelectedPlatesKey(sanitizeExerciseSwapsKey(sanitizeGoalKeys(parsed.settings))),
       ) as unknown as Settings,
       attendance,
     },

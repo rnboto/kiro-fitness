@@ -11,6 +11,12 @@ import {
 import { readGoal } from '../../domain/goal';
 import { readWeighInReminders } from '../../domain/weighInReminders';
 import { readSelectedPlates, withPlateChoice } from '../../domain/plateSelection';
+import {
+  readShoppingChecked,
+  readShoppingLastReset,
+  withShoppingReset,
+  withShoppingToggled,
+} from '../../domain/shoppingList';
 import { addSet, getAllSets, getLastSet } from '../workoutLogStore';
 import { getSettings, saveSettings } from '../settingsStore';
 import { DEFAULT_SETTINGS } from '../types';
@@ -225,6 +231,32 @@ describe('settingsStore', () => {
     });
     __resetBackendForTests();
     expect(readSelectedPlates(await getSettings())).toEqual({ cena: 'cena_x' });
+  });
+
+  it('lista de la compra: claves opcionales, marcas que sobreviven a la recarga y desmarcar todo', async () => {
+    expect(DEFAULT_SETTINGS.shoppingChecked).toBeUndefined();
+    expect(DEFAULT_SETTINGS.shoppingLastReset).toBeUndefined();
+    const first = await getSettings();
+    expect('shoppingChecked' in first).toBe(false);
+    expect(readShoppingChecked(first)).toEqual({});
+    expect(readShoppingLastReset(first)).toBeNull();
+
+    let checked = withShoppingToggled(readShoppingChecked(first), 'platano');
+    checked = withShoppingToggled(checked, 'muesli');
+    await saveSettings({ ...first, goalWeightKg: 70, shoppingChecked: checked });
+
+    __resetBackendForTests(); // recarga simulada
+    const reloaded = await getSettings();
+    expect(readShoppingChecked(reloaded)).toEqual({ platano: true, muesli: true });
+    expect(reloaded.goalWeightKg).toBe(70);
+
+    await saveSettings(withShoppingReset(reloaded, '2026-11-03'));
+    __resetBackendForTests();
+    const afterReset = await getSettings();
+    expect(readShoppingChecked(afterReset)).toEqual({});
+    expect(readShoppingLastReset(afterReset)).toBe('2026-11-03');
+    expect(afterReset.goalWeightKg).toBe(70);
+    expect(afterReset.reminders).toEqual(DEFAULT_SETTINGS.reminders);
   });
 
   it('los campos de objetivo son opcionales y no están en los defaults', async () => {

@@ -79,6 +79,7 @@ function AppContent() {
         type="button"
         className={styles.settingsBtn}
         aria-label="Ajustes"
+        data-print-hide
         onClick={() => setSettingsOpen(true)}
       >
         ⚙
@@ -88,13 +89,16 @@ function AppContent() {
       </main>
       {/* FAB global del cronómetro/temporizador (feature B): accesible desde
           cualquier pantalla. Independiente del RestTimer/SessionClock. */}
-      <TimerFab />
-      {/* FAB global de Música: lanza Amazon Music desde cualquier pantalla,
-          apilado encima del FAB del cronómetro para no solaparse. */}
-      <MusicFab />
-      {/* Pesajes semanal/mensual: timers globales con cualquier pestaña abierta. */}
-      <WeighInReminderHost onGoToCuerpo={goToCuerpo} />
-      <TabBar active={tab} onChange={setTab} />
+      {/* Al imprimir (Lista de la compra) se oculta todo el cromo fijo. */}
+      <div data-print-hide>
+        <TimerFab />
+        {/* FAB global de Música: lanza Amazon Music desde cualquier pantalla,
+            apilado encima del FAB del cronómetro para no solaparse. */}
+        <MusicFab />
+        {/* Pesajes semanal/mensual: timers globales con cualquier pestaña abierta. */}
+        <WeighInReminderHost onGoToCuerpo={goToCuerpo} />
+        <TabBar active={tab} onChange={setTab} />
+      </div>
 
       <Modal open={settingsOpen} title="Ajustes" onClose={() => setSettingsOpen(false)}>
         <SettingsPanel />

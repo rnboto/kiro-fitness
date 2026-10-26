@@ -79,3 +79,41 @@ ol {
   margin: 0 auto;
   padding: var(--kiro-space-5) var(--kiro-space-4);
 }
+
+/* Oculto a la vista pero accesible (p.ej. checkbox nativo dentro de una fila). */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Impresión (Lista de la compra → Imprimir / guardar PDF): A4, sin cromo. */
+@media print {
+  @page {
+    size: A4;
+    margin: 12mm;
+  }
+
+  html,
+  body {
+    background: #fff !important;
+    color: #000 !important;
+    min-height: 0;
+    padding: 0;
+  }
+
+  [data-print-hide] {
+    display: none !important;
+  }
+
+  .app-shell {
+    max-width: none;
+    padding: 0;
+  }
+}

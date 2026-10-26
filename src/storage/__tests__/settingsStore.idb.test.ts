@@ -35,6 +35,12 @@ vi.mock('../db', () => ({
 import { getSettings, saveSettings } from '../settingsStore';
 import { DEFAULT_SETTINGS } from '../types';
 import { readSelectedPlates, withPlateChoice } from '../../domain/plateSelection';
+import {
+  readShoppingChecked,
+  readShoppingLastReset,
+  withShoppingReset,
+  withShoppingToggled,
+} from '../../domain/shoppingList';
 
 beforeEach(() => mem.reset());
 
@@ -68,6 +74,39 @@ describe('settingsStore sobre backend con semántica IndexedDB · platos elegido
       selectedPlates: withPlateChoice(readSelectedPlates(mid), 'post', null),
     });
     expect(readSelectedPlates(await getSettings())).toEqual({ cena: 'c1' });
+  });
+
+  it('lista de la compra: marcar, recargar y seguir marcado; desmarcar todo fija la fecha', async () => {
+    const first = await getSettings();
+    expect('shoppingChecked' in first).toBe(false);
+    expect(readShoppingChecked(first)).toEqual({});
+
+    await saveSettings({
+      ...first,
+      shoppingChecked: withShoppingToggled(readShoppingChecked(first), 'skyr'),
+    });
+    const reloaded = await getSettings(); // «recarga»: lectura nueva del backend
+    expect(readShoppingChecked(reloaded)).toEqual({ skyr: true });
+    expect(reloaded.activityFactor).toBe(DEFAULT_SETTINGS.activityFactor);
+
+    await saveSettings(withShoppingReset(reloaded, '2026-11-03'));
+    const after = await getSettings();
+    expect(readShoppingChecked(after)).toEqual({});
+    expect(readShoppingLastReset(after)).toBe('2026-11-03');
+  });
+
+  it('valores corruptos de la lista de la compra se leen como vacíos', async () => {
+    const first = await getSettings();
+    await saveSettings({
+      ...first,
+      shoppingChecked: 'roto' as never,
+      shoppingLastReset: 'ayer' as never,
+    });
+    const s = await getSettings();
+    expect(readShoppingChecked(s)).toEqual({});
+    expect(readShoppingLastReset(s)).toBeNull();
+    await saveSettings({ ...first, shoppingChecked: { skyr: 1, nope: true } as never });
+    expect(readShoppingChecked(await getSettings())).toEqual({});
   });
 
   it('un valor corrupto guardado se lee como {} con la lectura defensiva', async () => {

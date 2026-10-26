@@ -141,6 +141,14 @@ export interface Settings {
    * se lee siempre con `readExerciseSwaps` (lectura defensiva, default {}).
    */
   exerciseSwaps?: ExerciseSwaps;
+  /**
+   * Productos marcados como «comprados» en la Lista de la compra (Nutrición),
+   * por clave de producto. Opcional por compatibilidad: los datos antiguos no
+   * lo tienen y NO está en DEFAULT_SETTINGS; se lee con `readShoppingChecked`.
+   */
+  shoppingChecked?: Record<string, true>;
+  /** Fecha local ('YYYY-MM-DD') del último «Desmarcar todo». Opcional; se lee con `readShoppingLastReset`. */
+  shoppingLastReset?: string;
 }
 
 /** Recordatorios por defecto (design §5, literales exactos). */
