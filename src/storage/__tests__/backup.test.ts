@@ -3,6 +3,7 @@ import { __resetBackendForTests } from '../db';
 import { addEntry, deleteEntry, getAllEntries, updateEntry } from '../profileStore';
 import { readGoal } from '../../domain/goal';
 import { readExerciseSwaps } from '../../domain/exerciseSubstitutions';
+import { readSelectedPlates } from '../../domain/plateSelection';
 import { readWeighInReminders } from '../../domain/weighInReminders';
 import { parseBackup, serializeBackup } from '../../domain/dataPorting';
 import { addSet, getAllSets } from '../workoutLogStore';
@@ -274,6 +275,55 @@ describe('sustituciones de ejercicios en el backup', () => {
     expect(result.backup.settings.exerciseSwaps).toEqual({});
     await importReplace(result.backup);
     expect(readExerciseSwaps(await getSettings())).toEqual({});
+  });
+});
+
+describe('platos elegidos en el backup', () => {
+  const PICKS = { post: 'post_skyr_muesli_frutos_rojos', cena: 'cena_x' };
+
+  it('round-trip con selectedPlates: export → wipe → importReplace los conserva', async () => {
+    await seed();
+    await saveSettings({ ...DEFAULT_SETTINGS, selectedPlates: PICKS });
+    const first = await exportAll();
+    expect(readSelectedPlates(first.settings)).toEqual(PICKS);
+
+    __resetBackendForTests();
+    localStorage.clear();
+    await importReplace(parseOk(serializeBackup(first)));
+
+    expect(readSelectedPlates(await getSettings())).toEqual(PICKS);
+    const second = await exportAll();
+    expect(second.settings).toEqual(first.settings);
+  });
+
+  it('backup antiguo sin selectedPlates importa bien y no hay elección', async () => {
+    await seed();
+    const legacy = JSON.parse(serializeBackup(await exportAll()));
+    delete legacy.settings.selectedPlates;
+
+    __resetBackendForTests();
+    localStorage.clear();
+    await importReplace(parseOk(JSON.stringify(legacy)));
+
+    const settings = await getSettings();
+    expect('selectedPlates' in settings).toBe(false);
+    expect(readSelectedPlates(settings)).toEqual({});
+    expect(await getAllSets()).toHaveLength(1);
+    expect(await getAllEntries()).toHaveLength(1);
+  });
+
+  it('selectedPlates corrupto no rechaza el archivo y se sanea', async () => {
+    await seed();
+    for (const bad of ['x', { post: 5 }]) {
+      const backup = JSON.parse(serializeBackup(await exportAll()));
+      backup.settings.selectedPlates = bad;
+      const result = parseBackup(JSON.stringify(backup));
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+      expect(result.backup.settings.selectedPlates).toEqual({});
+      await importReplace(result.backup);
+      expect(readSelectedPlates(await getSettings())).toEqual({});
+    }
   });
 });
 

@@ -20,16 +20,20 @@ const meal = (id: MealPlan['id']): MealPlan => plan.meals.find((m) => m.id === i
 
 function setup(id: MealPlan['id'], selectedPlateId?: string) {
   const onSelectPlate = vi.fn();
+  const onClearPlate = vi.fn();
   const onSwap = vi.fn();
-  render(
+  const element = (selected?: string) => (
     <MealCard
       meal={meal(id)}
-      selectedPlateId={selectedPlateId}
+      selectedPlateId={selected}
       onSelectPlate={onSelectPlate}
+      onClearPlate={onClearPlate}
       onSwap={onSwap}
-    />,
+    />
   );
-  return { onSelectPlate, onSwap };
+  const view = render(element(selectedPlateId));
+  const rerender = (selected?: string) => view.rerender(element(selected));
+  return { onSelectPlate, onClearPlate, onSwap, rerender };
 }
 
 const chips = () => within(screen.getByRole('group', { name: 'Ideas de comida' })).getAllByRole('button');
@@ -115,5 +119,83 @@ describe('MealCard · Ideas de comida', () => {
     setup('almuerzo');
     expect(screen.getByText('Cálculo básico por macros')).toBeTruthy();
     expect(screen.getAllByText('Pollo (pechuga)').length).toBeGreaterThan(0);
+  });
+});
+
+describe('MealCard · plato elegido', () => {
+  const post = platesForMeal('post');
+  const chipOf = (name: string) => plateChips().find((b) => b.textContent?.startsWith(name))!;
+
+  it('por defecto el plato mostrado es «Sugerido»: sin «Elegido» ni «Volver al sugerido»', () => {
+    setup('post');
+    expect(chipOf(post[0].name).textContent).toMatch(/Sugerido/);
+    expect(screen.queryByText('Elegido')).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Volver al sugerido' })).toBeNull();
+  });
+
+  it('con un plato elegido: marca «Elegido», la tarjeta lo muestra con sus gramos', () => {
+    const chosen = post[3];
+    setup('post', chosen.id);
+    const chip = chipOf(chosen.name);
+    expect(chip.textContent).toMatch(/Elegido/);
+    expect(chip.getAttribute('aria-pressed')).toBe('true');
+    expect(chipOf(post[0].name).getAttribute('aria-pressed')).toBe('false');
+    expect(screen.getByRole('heading', { level: 4, name: chosen.name })).toBeTruthy();
+    expect(screen.getAllByText(/g crudo/).length).toBeGreaterThan(0);
+    expect(screen.getByText(/Este plato:/)).toBeTruthy();
+    expect(screen.getByText(/Objetivo:/)).toBeTruthy();
+    expect(screen.queryByText('Sugerido')).toBeNull();
+  });
+
+  it('al volver a montar con el mismo id sigue «Elegido»', () => {
+    const chosen = post[2];
+    setup('post', chosen.id);
+    cleanup();
+    setup('post', chosen.id);
+    expect(chipOf(chosen.name).textContent).toMatch(/Elegido/);
+    expect(screen.getByRole('heading', { level: 4, name: chosen.name })).toBeTruthy();
+  });
+
+  it('reacciona a un cambio de la elección recibida', () => {
+    const { rerender } = setup('post');
+    rerender(post[4].id);
+    expect(screen.getByRole('heading', { level: 4, name: post[4].name })).toBeTruthy();
+    rerender(undefined);
+    expect(screen.getByRole('heading', { level: 4, name: post[0].name })).toBeTruthy();
+  });
+
+  it('«Solo para llevar» no borra la elección: un plato no portátil elegido sigue en la tarjeta', async () => {
+    const user = userEvent.setup();
+    const nonPortable = post.find((p) => !p.portable)!;
+    const { onSelectPlate, onClearPlate } = setup('post', nonPortable.id);
+    await user.click(screen.getByRole('button', { name: 'Solo para llevar' }));
+    expect(screen.getByRole('heading', { level: 4, name: nonPortable.name })).toBeTruthy();
+    expect(plateChips().some((b) => b.textContent?.startsWith(nonPortable.name))).toBe(false);
+    expect(screen.getByText(/no es para llevar; sigue elegida/)).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Volver al sugerido' })).toBeTruthy();
+    expect(onSelectPlate).not.toHaveBeenCalled();
+    expect(onClearPlate).not.toHaveBeenCalled();
+    await user.click(screen.getByRole('button', { name: 'Solo para llevar' }));
+    expect(screen.queryByText(/sigue elegida/)).toBeNull();
+    expect(chipOf(nonPortable.name).textContent).toMatch(/Elegido/);
+  });
+
+  it('«Volver al sugerido» avisa una sola vez', async () => {
+    const user = userEvent.setup();
+    const { onClearPlate } = setup('post', post[3].id);
+    await user.click(screen.getByRole('button', { name: 'Volver al sugerido' }));
+    expect(onClearPlate).toHaveBeenCalledTimes(1);
+  });
+
+  it('un id de otra comida cae al sugerido y no ofrece «Volver al sugerido»', () => {
+    setup('almuerzo', platesForMeal('cena')[2].id);
+    expect(screen.queryByRole('button', { name: 'Volver al sugerido' })).toBeNull();
+    expect(screen.queryByText('Elegido')).toBeNull();
+  });
+
+  it('la tarjeta tiene id de ancla y nombre accesible', () => {
+    setup('cena');
+    const article = screen.getByRole('article', { name: /Cena/ });
+    expect(article.id).toBe('comida-cena');
   });
 });

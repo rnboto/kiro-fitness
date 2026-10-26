@@ -11,7 +11,11 @@ import {
   type NutritionInput,
 } from '../../domain/nutrition';
 import type { Food } from '../../domain/foodDb';
+import type { MealId } from '../../domain/mealPlates';
+import { readSelectedPlates, withPlateChoice } from '../../domain/plateSelection';
+import { buildDaySummary } from '../../domain/daySummary';
 import MealCard from './MealCard';
+import MiDiaSummary from './MiDiaSummary';
 import FoodSwapModal from './FoodSwapModal';
 import styles from './NutricionScreen.module.css';
 
@@ -48,9 +52,32 @@ export default function NutricionScreen() {
     return buildDailyPlan(input);
   }, [profile, settings]);
 
-  if (!plan) {
+  // Platos elegidos por comida (lectura defensiva; solo ids, nunca gramos).
+  const selectedPlates = useMemo(() => readSelectedPlates(settings), [settings]);
+  const daySummary = useMemo(
+    () => (plan ? buildDaySummary(plan, selectedPlates) : null),
+    [plan, selectedPlates],
+  );
+
+  if (!plan || !daySummary) {
     return <p className={styles.loading}>Cargando tu plan…</p>;
   }
+
+  const choosePlate = (mealId: MealId, plateId: string | null) => {
+    if (!settings) return;
+    void updateSettings({
+      ...settings,
+      selectedPlates: withPlateChoice(selectedPlates, mealId, plateId),
+    });
+  };
+
+  // jsdom no implementa scrollIntoView: llamada opcional.
+  const scrollToMeal = (mealId: MealId) => {
+    document.getElementById(`comida-${mealId}`)?.scrollIntoView?.({
+      behavior: 'smooth',
+      block: 'start',
+    });
+  };
 
   return (
     <div className={styles.screen}>
@@ -86,19 +113,16 @@ export default function NutricionScreen() {
 
       {plan.warning && <p className={styles.warning}>{WARNING_TEXT[plan.warning]}</p>}
 
+      <MiDiaSummary summary={daySummary} onSelectMeal={scrollToMeal} />
+
       <div className={styles.meals}>
         {plan.meals.map((meal) => (
           <MealCard
             key={meal.id}
             meal={meal}
-            selectedPlateId={settings?.selectedPlates?.[meal.id]}
-            onSelectPlate={(plateId) => {
-              if (!settings) return;
-              void updateSettings({
-                ...settings,
-                selectedPlates: { ...settings.selectedPlates, [meal.id]: plateId },
-              });
-            }}
+            selectedPlateId={selectedPlates[meal.id]}
+            onSelectPlate={(plateId) => choosePlate(meal.id, plateId)}
+            onClearPlate={() => choosePlate(meal.id, null)}
             onSwap={(food, grams, macro) => setSwap({ food, grams, macro, mealId: meal.id })}
           />
         ))}

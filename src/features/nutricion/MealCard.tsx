@@ -1,56 +1,69 @@
-// Tarjeta de una comida: nombre, hora sugerida, "Ideas de comida" (platos
+﻿// Tarjeta de una comida: nombre, hora sugerida, "Ideas de comida" (platos
 // típicos de ese momento del día con gramos exactos) y, plegado, el cálculo
-// básico por macros. Al tocar un alimento abre el swap modal.
+// básico por macros. Al tocar un plato queda ELEGIDO para esa comida (se
+// persiste por id); al tocar un alimento abre el swap modal.
 
 import { useMemo, useState } from 'react';
 import { toCookedGrams, type Food } from '../../domain/foodDb';
-import { platesForMeal, resolvePlate } from '../../domain/mealPlates';
+import { platesForMeal } from '../../domain/mealPlates';
 import type { MassMacro, MealPlan } from '../../domain/nutrition';
 import { computePlate } from '../../domain/plateSizing';
+import { isPlateChosen, resolveChosenPlate } from '../../domain/plateSelection';
+import { mealTitle } from './mealLabels';
 import { mealFoodItems } from './mealFoods';
 import PlateDetail from './PlateDetail';
 import styles from './MealCard.module.css';
 
 interface MealCardProps {
   meal: MealPlan;
-  /** Id del plato elegido para esta comida (persistido); si no existe se usa el primero. */
+  /** Id del plato elegido para esta comida (persistido); si no es válido se usa el primero. */
   selectedPlateId?: string;
   onSelectPlate: (plateId: string) => void;
+  /** Quita la elección y vuelve al plato sugerido. */
+  onClearPlate: () => void;
   onSwap: (food: Food, grams: number, macro: MassMacro) => void;
 }
-
-// Pistas SOLO de interfaz: el nombre almacenado de la comida no cambia.
-const MEAL_TITLE_HINT: Partial<Record<MealPlan['id'], string>> = {
-  post: 'Desayuno',
-};
 
 const MEAL_HELP: Partial<Record<MealPlan['id'], string>> = {
   post: 'Tu desayuno: elige un plato portátil si lo tomas en el trabajo.',
 };
 
-export default function MealCard({ meal, selectedPlateId, onSelectPlate, onSwap }: MealCardProps) {
+export default function MealCard({
+  meal,
+  selectedPlateId,
+  onSelectPlate,
+  onClearPlate,
+  onSwap,
+}: MealCardProps) {
   const [onlyPortable, setOnlyPortable] = useState(false);
 
   const items = mealFoodItems(meal.macros);
   const allPlates = platesForMeal(meal.id);
   const hasPortable = allPlates.some((p) => p.portable);
   const visiblePlates = onlyPortable ? allPlates.filter((p) => p.portable) : allPlates;
-  const selected = resolvePlate(meal.id, selectedPlateId);
-  const plate = visiblePlates.find((p) => p.id === selected.id) ?? visiblePlates[0];
+
+  // El plato mostrado es SIEMPRE el resuelto (elegido o sugerido); el filtro
+  // «Solo para llevar» solo cambia qué opciones se listan, nunca la elección.
+  const selection = selectedPlateId ? { [meal.id]: selectedPlateId } : undefined;
+  const plate = allPlates.length > 0 ? resolveChosenPlate(meal.id, selection) : null;
+  const chosen = isPlateChosen(meal.id, selection);
+  const hiddenByFilter = !!plate && !visiblePlates.some((p) => p.id === plate.id);
 
   const result = useMemo(
     () => (plate ? computePlate(plate, meal.macros) : null),
     [plate, meal.macros],
   );
 
-  const hint = MEAL_TITLE_HINT[meal.id];
-  const title = hint ? `${meal.name} · ${hint}` : meal.name;
+  const title = mealTitle(meal.id, meal.name);
   const help = MEAL_HELP[meal.id];
+  const titleId = `comida-${meal.id}-titulo`;
 
   return (
-    <article className={styles.card}>
+    <article id={`comida-${meal.id}`} className={styles.card} aria-labelledby={titleId}>
       <header className={styles.header}>
-        <h3 className={styles.name}>{title}</h3>
+        <h3 id={titleId} className={styles.name}>
+          {title}
+        </h3>
         <span className={styles.time}>{meal.time}</span>
       </header>
 
@@ -76,19 +89,36 @@ export default function MealCard({ meal, selectedPlateId, onSelectPlate, onSwap 
                 Solo para llevar
               </button>
             )}
-            {visiblePlates.map((p) => (
-              <button
-                key={p.id}
-                type="button"
-                className={`${styles.chip} ${p.id === plate?.id ? styles.chipActive : ''}`}
-                aria-pressed={p.id === plate?.id}
-                onClick={() => onSelectPlate(p.id)}
-              >
-                {p.name}
-                {p.portable && <span className={styles.chipTag}>Portátil</span>}
-              </button>
-            ))}
+            {visiblePlates.map((p) => {
+              const active = p.id === plate?.id;
+              return (
+                <button
+                  key={p.id}
+                  type="button"
+                  className={`${styles.chip} ${active ? styles.chipActive : ''}`}
+                  aria-pressed={active}
+                  onClick={() => onSelectPlate(p.id)}
+                >
+                  {p.name}
+                  {p.portable && <span className={styles.chipTag}>Portátil</span>}
+                  {active && (
+                    <span className={styles.chipStatus}>{chosen ? 'Elegido' : 'Sugerido'}</span>
+                  )}
+                </button>
+              );
+            })}
           </div>
+
+          {chosen && (
+            <button type="button" className={styles.resetChoice} onClick={onClearPlate}>
+              Volver al sugerido
+            </button>
+          )}
+          {hiddenByFilter && plate && (
+            <p className={styles.hiddenChoice}>
+              Tu elección ({plate.name}) no es para llevar; sigue elegida.
+            </p>
+          )}
 
           {result && <PlateDetail result={result} onSwap={onSwap} />}
         </section>

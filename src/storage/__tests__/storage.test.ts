@@ -10,6 +10,7 @@ import {
 } from '../profileStore';
 import { readGoal } from '../../domain/goal';
 import { readWeighInReminders } from '../../domain/weighInReminders';
+import { readSelectedPlates, withPlateChoice } from '../../domain/plateSelection';
 import { addSet, getAllSets, getLastSet } from '../workoutLogStore';
 import { getSettings, saveSettings } from '../settingsStore';
 import { DEFAULT_SETTINGS } from '../types';
@@ -188,6 +189,42 @@ describe('settingsStore', () => {
     });
     const got = await getSettings();
     expect(got.selectedPlates?.post).toBe('post_skyr_muesli_frutos_rojos');
+  });
+
+  it('selectedPlates sobrevive a una recarga (localStorage) y no toca otros ajustes', async () => {
+    const base = {
+      ...DEFAULT_SETTINGS,
+      goalWeightKg: 70,
+      goalStartWeightKg: 75,
+      exerciseSwaps: {
+        'f1-sup-a::bench_press': { toKey: 'db_bench_press', scope: 'fijo' as const, date: '2024-06-10' },
+      },
+    };
+    await saveSettings({
+      ...base,
+      selectedPlates: withPlateChoice({}, 'post', 'post_skyr_muesli_frutos_rojos'),
+    });
+    await saveSettings({
+      ...(await getSettings()),
+      selectedPlates: withPlateChoice(readSelectedPlates(await getSettings()), 'cena', 'cena_x'),
+    });
+
+    __resetBackendForTests(); // recarga simulada: se vuelve a abrir el backend
+    const reloaded = await getSettings();
+    expect(readSelectedPlates(reloaded)).toEqual({
+      post: 'post_skyr_muesli_frutos_rojos',
+      cena: 'cena_x',
+    });
+    expect(reloaded.goalWeightKg).toBe(70);
+    expect(reloaded.exerciseSwaps).toEqual(base.exerciseSwaps);
+    expect(reloaded.reminders).toEqual(DEFAULT_SETTINGS.reminders);
+
+    await saveSettings({
+      ...reloaded,
+      selectedPlates: withPlateChoice(readSelectedPlates(reloaded), 'post', null),
+    });
+    __resetBackendForTests();
+    expect(readSelectedPlates(await getSettings())).toEqual({ cena: 'cena_x' });
   });
 
   it('los campos de objetivo son opcionales y no están en los defaults', async () => {

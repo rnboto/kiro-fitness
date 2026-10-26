@@ -270,3 +270,28 @@ describe('clave opcional exerciseSwaps', () => {
     if (result.ok) expect(result.backup.settings.exerciseSwaps).toEqual(exerciseSwaps);
   });
 });
+
+describe('clave opcional selectedPlates', () => {
+  const base = {
+    schemaVersion: 1,
+    exportedAt: NOW.toISOString(),
+    profiles: [],
+    sets: [],
+    cardio: [],
+  };
+
+  it('sin la clave los ajustes quedan idénticos (backups antiguos)', () => {
+    const result = parseBackup(JSON.stringify({ ...base, settings }));
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect('selectedPlates' in result.backup.settings).toBe(false);
+    expect(result.backup.settings).toEqual(settings);
+  });
+
+  it('con un mapa válido lo conserva', () => {
+    const selectedPlates = { post: 'post_skyr_muesli_frutos_rojos', cena: 'cena_x' };
+    const result = parseBackup(JSON.stringify({ ...base, settings: { ...settings, selectedPlates } }));
+    expect(result.ok).toBe(true);
+    if (result.ok) expect(result.backup.settings.selectedPlates).toEqual(selectedPlates);
+  });
+});
